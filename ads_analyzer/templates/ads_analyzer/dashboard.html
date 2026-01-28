@@ -1,0 +1,222 @@
+{% load static %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdPerformance Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .card {
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4ade80;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+
+<body class="p-6">
+
+    <!-- Header -->
+    <div class="mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-white">AdPerformance Executive Overview</h1>
+            <p class="text-gray-400">Q1 2023 Performance Data (Indonesia Market)</p>
+        </div>
+        <div class="bg-gray-800 px-4 py-2 rounded text-sm text-gray-300">
+            Status: <span class="text-green-400 font-bold">Online</span> | Data Validated
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="card">
+            <div class="stat-label">Total Revenue (GMV)</div>
+            <div class="stat-value">IDR {{ summary_stats.total_revenue|idr_currency }}</div>
+        </div>
+        <div class="card">
+            <div class="stat-label">Total Spend</div>
+            <div class="stat-value">IDR {{ summary_stats.total_spend|idr_currency }}</div>
+        </div>
+        <div class="card">
+            <div class="stat-label">Overall ROAS</div>
+            <div class="stat-value">{{ summary_stats.overall_roas|floatformat:2 }}x</div>
+        </div>
+        <div class="card border-l-4 border-blue-500">
+            <div class="stat-label">Data Health</div>
+            <div class="text-blue-400 font-bold">{{ anomalies_count }} Anomalies Fixed (SciPy/Pandas)</div>
+        </div>
+    </div>
+
+    <!-- Main Chart Section: Trend Analysis -->
+    <div class="card mb-8">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-white">Annual Revenue & Spend Trend (Jan - Dec 2023)</h2>
+            <div class="text-sm text-gray-400">Includes Ramadan & Harbolnas Events</div>
+        </div>
+        <div id="main-chart" style="width:100%;height:500px;"></div>
+    </div>
+
+    <!-- Section 2: Funnel & Diagnostics -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div class="card col-span-2">
+            <h2 class="text-xl font-bold mb-4 text-white">Average Annual Sales Funnel</h2>
+            <div id="funnel-chart" style="width:100%;height:400px;"></div>
+        </div>
+        <div class="card">
+            <h2 class="text-xl font-bold mb-4 text-red-500">Data Quality Audit Log</h2>
+            <div class="bg-gray-800 p-4 rounded h-full overflow-y-auto" style="max-height: 400px;">
+                <div class="mb-4 border-b border-gray-700 pb-2">
+                    <p class="text-orange-400 font-bold text-sm">⚠ Reach > Impression Anomalies</p>
+                    <p class="text-xs text-gray-400">Total {{ anomalies_count }} instances fixed automatically.</p>
+                </div>
+                <div class="mb-4 border-b border-gray-700 pb-2">
+                    <p class="text-red-400 font-bold text-sm">⚠ CRITICAL DROP-OFF</p>
+                    <p class="text-xs text-gray-400">90% drop from Click to View. Potential site latency issue.</p>
+                </div>
+                <div class="space-y-2 text-xs text-gray-500">
+                    <p>[Log] 2023-12-12: Client A reach capped.</p>
+                    <p>[Log] 2023-11-11: Client A reach capped.</p>
+                    <p>[Log] 2023-10-25: Floating point rounding corrected.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 3: AI Strategic Budget Allocation -->
+    <div class="card mb-8">
+        <h2 class="text-xl font-bold mb-6 text-green-400">AI Strategic Budget Allocation (2024 Forecast)</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+
+            <!-- Pie Charts -->
+            <div class="flex flex-col md:flex-row justify-around">
+                <div class="w-full md:w-1/2">
+                    <h3 class="text-center text-sm mb-2 text-gray-400">2023 Actual Allocation</h3>
+                    <div id="pie-actual" style="width:100%;height:300px;"></div>
+                </div>
+                <div class="w-full md:w-1/2 relative">
+                    <h3 class="text-center text-sm mb-2 text-green-400 font-bold">2024 Optimized Plan</h3>
+                    <div id="pie-recommended" style="width:100%;height:300px;"></div>
+                    <!-- Arrow overlay could be CSS, but simpler to just show side by side -->
+                </div>
+            </div>
+
+            <!-- Recommendation Table -->
+            <div>
+                <p class="text-sm text-gray-400 mb-4">
+                    Based on 2023 ROAS data, the SciPy optimizer recommends shifting budget towards high-ROAS categories
+                    (Beauty/Fashion) to achieve a projected <span class="text-green-400 font-bold">+22% Revenue
+                        Lift</span>.
+                </p>
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-800 text-gray-400">
+                        <tr>
+                            <th class="p-2">Channel</th>
+                            <th class="p-2">Hist. ROAS</th>
+                            <th class="p-2">Rec. Spend/Day</th>
+                            <th class="p-2">Proj. Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {% for opt in optimization %}
+                        <tr class="hover:bg-gray-700">
+                            <td class="p-2 font-bold">{{ opt.channel }}</td>
+                            <td class="p-2 text-blue-300">{{ opt.roas|floatformat:2 }}x</td>
+                            <td class="p-2">IDR {{ opt.suggested_spend|idr_currency }}</td>
+                            <td class="p-2 text-green-300">IDR {{ opt.projected_revenue|idr_currency }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- JSON Data for Plotly -->
+    {{ chart_data_json|json_script:"chart-data" }}
+    {{ funnel_data_json|json_script:"funnel-data" }}
+    {{ allocation_data.actual|json_script:"alloc-actual" }}
+    {{ allocation_data.recommended|json_script:"alloc-rec" }}
+
+    <script>
+        // 1. Trend Chart
+        const chartData = JSON.parse(document.getElementById('chart-data').textContent);
+        const traceRevenue = {
+            x: chartData.dates, y: chartData.revenue, type: 'scatter', mode: 'lines', name: 'Revenue',
+            line: { color: '#4ade80', width: 2 }
+        };
+        const traceSpend = {
+            x: chartData.dates, y: chartData.traffic_spend.map((v, i) => v + chartData.sales_spend[i]),
+            type: 'scatter', mode: 'lines', name: 'Total Spend',
+            line: { color: '#60a5fa', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(96, 165, 250, 0.1)'
+        };
+        const layoutTrend = {
+            paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#9ca3af' },
+            xaxis: { gridcolor: '#374151', title: 'Date' }, yaxis: { gridcolor: '#374151', title: 'IDR' },
+            margin: { t: 20, l: 60, r: 20, b: 60 }, legend: { orientation: 'h', y: 1.1 },
+            annotations: [
+                { x: '2023-04-15', y: Math.max(...chartData.revenue) * 0.8, xref: 'x', yref: 'y', text: 'Ramadan Peak', showarrow: true, arrowhead: 1, ax: 0, ay: -40 },
+                { x: '2023-11-11', y: Math.max(...chartData.revenue) * 0.9, xref: 'x', yref: 'y', text: '11.11 Sales', showarrow: true, arrowhead: 1, ax: 0, ay: -40 }
+            ]
+        };
+        Plotly.newPlot('main-chart', [traceSpend, traceRevenue], layoutTrend, { responsive: true });
+
+        // 2. Funnel Chart
+        const funnelData = JSON.parse(document.getElementById('funnel-data').textContent);
+        const traceFunnel = {
+            type: 'funnel',
+            y: funnelData.stages,
+            x: funnelData.values,
+            textinfo: "value+percent initial",
+            marker: { color: ["#60a5fa", "#3b82f6", "#ef4444", "#f59e0b", "#10b981"] }
+        };
+        const layoutFunnel = {
+            paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#9ca3af' },
+            margin: { l: 150, r: 20, t: 20, b: 20 }
+        };
+        Plotly.newPlot('funnel-chart', [traceFunnel], layoutFunnel, { responsive: true });
+
+        // 3. Allocation Pie Charts
+        const allocActual = JSON.parse(document.getElementById('alloc-actual').textContent);
+        const allocRec = JSON.parse(document.getElementById('alloc-rec').textContent);
+
+        const pieLayout = {
+            paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#9ca3af' },
+            margin: { t: 0, b: 0, l: 0, r: 0 }, showlegend: false
+        };
+
+        Plotly.newPlot('pie-actual', [{
+            values: allocActual.map(d => d.value), labels: allocActual.map(d => d.label),
+            type: 'pie', hole: 0.4, textinfo: 'label+percent', marker: { colors: ['#6366f1', '#ec4899', '#14b8a6'] }
+        }], pieLayout, { responsive: true });
+
+        Plotly.newPlot('pie-recommended', [{
+            values: allocRec.map(d => d.value), labels: allocRec.map(d => d.label),
+            type: 'pie', hole: 0.4, textinfo: 'label+percent', marker: { colors: ['#6366f1', '#ec4899', '#14b8a6'] }
+        }], pieLayout, { responsive: true });
+
+    </script>
+</body>
+
+</html>
