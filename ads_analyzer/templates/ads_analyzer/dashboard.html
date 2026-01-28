@@ -69,7 +69,44 @@
         </div>
     </div>
 
-    <!-- Main Chart Section: Trend Analysis -->
+    <!-- Deep Dive Metrics Row (Weighted Averages) -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="card bg-gray-800 border border-gray-700">
+            <div class="stat-label mb-1">CTR (Click-Through Rate)</div>
+            <div class="text-2xl font-bold text-yellow-400">{{ deep_dive_metrics.ctr|floatformat:2 }}%</div>
+            <div class="text-xs text-gray-500">Global Average</div>
+        </div>
+        <div class="card bg-gray-800 border border-gray-700">
+            <div class="stat-label mb-1">CPC (Cost Per Click)</div>
+            <div class="text-2xl font-bold text-blue-400">IDR {{ deep_dive_metrics.cpc|idr_currency }}</div>
+            <div class="text-xs text-gray-500">Global Weighted Avg</div>
+        </div>
+        <div class="card bg-gray-800 border border-gray-700">
+            <div class="stat-label mb-1">CVR (Conversion Rate)</div>
+            <div class="text-2xl font-bold text-green-400">{{ deep_dive_metrics.cvr|floatformat:2 }}%</div>
+            <div class="text-xs text-gray-500">Purchases / Link Clicks</div>
+        </div>
+        <div class="card bg-gray-800 border border-gray-700">
+            <div class="stat-label mb-1">AOV (Avg Order Value)</div>
+            <div class="text-2xl font-bold text-purple-400">IDR {{ deep_dive_metrics.aov|idr_currency }}</div>
+            <div class="text-xs text-gray-500">Revenue / Purchases</div>
+        </div>
+    </div>
+
+    <!-- Section: Monthly Global Trends (Modul 2) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <!-- Monthly Financials (Spend vs Revenue vs Calculate Monthly ROAS) -->
+        <div class="card h-[450px]">
+            <h2 class="text-xl font-bold mb-4 text-white">Monthly Financial Performance</h2>
+            <div id="monthly-financial-chart" class="h-[380px]"></div>
+        </div>
+
+        <!-- Monthly Efficiency (CTR vs CVR) -->
+        <div class="card h-[450px]">
+            <h2 class="text-xl font-bold mb-4 text-white">Monthly Efficiency Trends</h2>
+            <div id="monthly-efficiency-chart" class="h-[380px]"></div>
+        </div>
+    </div>
     <div class="card mb-8">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-bold text-white">Annual Revenue & Spend Trend (Jan - Dec 2023)</h2>
@@ -78,29 +115,46 @@
         <div id="main-chart" style="width:100%;height:500px;"></div>
     </div>
 
-    <!-- Section 2: Funnel & Diagnostics -->
+    <!-- Section 2: Funnel & Correlation Analysis (Modul 3) -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <!-- Funnel Analysis (65% width) -->
         <div class="card col-span-2">
-            <h2 class="text-xl font-bold mb-4 text-white">Average Annual Sales Funnel</h2>
+            <h2 class="text-xl font-bold mb-4 text-white">Conversion Funnel Analysis</h2>
             <div id="funnel-chart" style="width:100%;height:400px;"></div>
-        </div>
-        <div class="card">
-            <h2 class="text-xl font-bold mb-4 text-red-500">Data Quality Audit Log</h2>
-            <div class="bg-gray-800 p-4 rounded h-full overflow-y-auto" style="max-height: 400px;">
-                <div class="mb-4 border-b border-gray-700 pb-2">
-                    <p class="text-orange-400 font-bold text-sm">⚠ Reach > Impression Anomalies</p>
-                    <p class="text-xs text-gray-400">Total {{ anomalies_count }} instances fixed automatically.</p>
+
+            <!-- Conversion Efficiency Cards (Step-by-Step Rates) -->
+            <div class="grid grid-cols-4 gap-4 mt-4 text-center">
+                <div class="bg-gray-800 p-2 rounded">
+                    <div class="text-xs text-gray-400">Hook Rate</div>
+                    <div class="text-lg font-bold text-yellow-400">{{ funnel_rates.hook_rate|floatformat:2 }}%</div>
+                    <div class="text-[10px] text-gray-500">Click / Imp</div>
                 </div>
-                <div class="mb-4 border-b border-gray-700 pb-2">
-                    <p class="text-red-400 font-bold text-sm">⚠ CRITICAL DROP-OFF</p>
-                    <p class="text-xs text-gray-400">90% drop from Click to View. Potential site latency issue.</p>
+                <div class="bg-gray-800 p-2 rounded">
+                    <div class="text-xs text-gray-400">LP Rate</div>
+                    <div class="text-lg font-bold text-blue-400">{{ funnel_rates.lp_rate|floatformat:2 }}%</div>
+                    <div class="text-[10px] text-gray-500">View / Link</div>
                 </div>
-                <div class="space-y-2 text-xs text-gray-500">
-                    <p>[Log] 2023-12-12: Client A reach capped.</p>
-                    <p>[Log] 2023-11-11: Client A reach capped.</p>
-                    <p>[Log] 2023-10-25: Floating point rounding corrected.</p>
+                <div class="bg-gray-800 p-2 rounded">
+                    <div class="text-xs text-gray-400">ATC Rate</div>
+                    <div class="text-lg font-bold text-pink-400">{{ funnel_rates.atc_rate|floatformat:2 }}%</div>
+                    <div class="text-[10px] text-gray-500">ATC / View</div>
+                </div>
+                <div class="bg-gray-800 p-2 rounded">
+                    <div class="text-xs text-gray-400">Close Rate</div>
+                    <div class="text-lg font-bold text-green-400">{{ funnel_rates.close_rate|floatformat:2 }}%</div>
+                    <div class="text-[10px] text-gray-500">Pur / ATC</div>
                 </div>
             </div>
+        </div>
+
+        <!-- Correlation Matrix (35% width) -->
+        <div class="card">
+            <h2 class="text-xl font-bold mb-4 text-white">Correlation Matrix</h2>
+            <div id="heatmap-chart" style="width:100%;height:400px;"></div>
+            <p class="text-xs text-gray-400 mt-2">
+                *Insight: Red squares indicate strong positive correlation. Check if "Amount Spent" correlates strongly
+                with "Purchase Value".
+            </p>
         </div>
     </div>
 
@@ -123,6 +177,21 @@
                     }}%</div>
                 <div class="text-xs text-gray-500">IDR {{ optimization_metrics.uplift_absolute|idr_currency }}</div>
             </div>
+        </div>
+    </div>
+
+    <!-- Section 2.5: Comparison Charts Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <!-- Industry Comparison Chart -->
+        <div class="card h-[400px]">
+            <h2 class="text-xl font-bold mb-4 text-purple-400">Industry Monthly Trends (Seasonality)</h2>
+            <div id="industry-chart" class="h-[320px]"></div>
+        </div>
+
+        <!-- Objective Comparison Chart -->
+        <div class="card h-[400px]">
+            <h2 class="text-xl font-bold mb-4 text-blue-400">Campaign Objective Analysis</h2>
+            <div id="objective-chart" class="h-[320px]"></div>
         </div>
     </div>
 
@@ -179,10 +248,100 @@
     {{ funnel_data_json|json_script:"funnel-data" }}
     {{ allocation_data.actual|json_script:"alloc-actual" }}
     {{ allocation_data.recommended|json_script:"alloc-rec" }}
+    {{ industry_monthly_json|json_script:"industry-monthly-data" }}
+    {{ objective_chart_json|json_script:"objective-chart-data" }}
+    {{ monthly_trend_json|json_script:"monthly-trend-data" }}
+    {{ funnel_abs|json_script:"funnel-abs-data" }}
+    {{ heatmap_json|json_script:"heatmap-data" }}
 
     <script>
-        // 1. Trend Chart
+        // ... (Existing chart logic) ...
         const chartData = JSON.parse(document.getElementById('chart-data').textContent);
+        // ... Code for Main Trend Chart ...
+
+        // NEW: Modul 3 Funnel Chart (Absolute Numbers)
+        const fAbs = JSON.parse(document.getElementById('funnel-abs-data').textContent);
+        const traceFunnel = {
+            type: 'funnel',
+            y: ['Impressions', 'Clicks', 'Link Clicks', 'Content Views', 'Add to Cart', 'Purchases'],
+            x: [
+                fAbs.impressions, fAbs.clicks, fAbs.link_clicks,
+                fAbs.content_views, fAbs.add_to_cart, fAbs.purchases
+            ],
+            textinfo: "value+percent previous",
+            textposition: "inside",
+            hoverinfo: "label+value+percent initial",
+            marker: {
+                color: ["#6366f1", "#8b5cf6", "#d946ef", "#ec4899", "#f43f5e", "#10b981"]
+            }
+        };
+        Plotly.newPlot('funnel-chart', [traceFunnel], {
+            paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#9ca3af' },
+            margin: { l: 120, r: 20, t: 30, b: 20 }
+        }, { responsive: true });
+
+        // NEW: Modul 3 Correlation Heatmap
+        const hData = JSON.parse(document.getElementById('heatmap-data').textContent);
+        const traceHeatmap = {
+            z: hData.z,
+            x: hData.x,
+            y: hData.y,
+            type: 'heatmap',
+            colorscale: 'RdBu',
+            zmid: 0,
+            showscale: true
+        };
+        Plotly.newPlot('heatmap-chart', [traceHeatmap], {
+            paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#9ca3af' },
+            margin: { l: 100, b: 80, t: 20, r: 20 },
+            xaxis: { tickangle: -45 }
+        }, { responsive: true });
+
+        // ... (Existing Monthly Trend Logic) ...
+        const mTrend = JSON.parse(document.getElementById('monthly-trend-data').textContent);
+
+        // Chart 1: Financials (Bar Spend/Rev + Line ROAS)
+        const trM_Rev = { x: mTrend.months, y: mTrend.revenue, name: 'Revenue', type: 'bar', marker: { color: '#4ade80' } };
+        const trM_Spd = { x: mTrend.months, y: mTrend.spend, name: 'Spend', type: 'bar', marker: { color: '#60a5fa' } };
+        const trM_Roas = {
+            x: mTrend.months, y: mTrend.roas, name: 'ROAS', type: 'scatter', mode: 'lines+markers',
+            yaxis: 'y2', line: { color: '#f59e0b', width: 3 }, marker: { size: 6 }
+        };
+
+        Plotly.newPlot('monthly-financial-chart', [trM_Spd, trM_Rev, trM_Roas], {
+            barmode: 'group',
+            paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#9ca3af' },
+            yaxis: { gridcolor: '#374151', title: 'IDR', tickformat: ',.0f' },
+            yaxis2: {
+                title: 'ROAS', overlaying: 'y', side: 'right', gridcolor: 'rgba(0,0,0,0)',
+                tickformat: '.2f', range: [0, Math.max(...mTrend.roas) * 1.2]
+            },
+            legend: { orientation: 'h', y: 1.1 },
+            margin: { t: 40, l: 60, r: 50, b: 40 }
+        }, { responsive: true });
+
+        // Chart 2: Efficiency (Line CTR & CVR)
+        const trM_Ctr = {
+            x: mTrend.months, y: mTrend.ctr, name: 'CTR %', type: 'scatter', mode: 'lines+markers',
+            line: { color: '#facc15', width: 3 }, marker: { size: 6 }
+        };
+        const trM_Cvr = {
+            x: mTrend.months, y: mTrend.cvr, name: 'CVR %', type: 'scatter', mode: 'lines+markers',
+            yaxis: 'y2', line: { color: '#34d399', width: 3 }, marker: { size: 6 }
+        };
+
+        Plotly.newPlot('monthly-efficiency-chart', [trM_Ctr, trM_Cvr], {
+            paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#9ca3af' },
+            yaxis: { gridcolor: '#374151', title: 'CTR %' },
+            yaxis2: {
+                title: 'CVR %', overlaying: 'y', side: 'right', gridcolor: 'rgba(0,0,0,0)',
+            },
+            legend: { orientation: 'h', y: 1.1 },
+            margin: { t: 40, l: 50, r: 50, b: 40 }
+        }, { responsive: true });
+
+        // ... (Existing charts below) ...
+
         const traceRevenue = {
             x: chartData.dates, y: chartData.revenue, type: 'scatter', mode: 'lines', name: 'Revenue',
             line: { color: '#4ade80', width: 2 },
@@ -194,6 +353,14 @@
             line: { color: '#60a5fa', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(96, 165, 250, 0.1)',
             hovertemplate: 'Spend: IDR %{y:,.0f}<extra></extra>'
         };
+
+        const traceROAS = {
+            x: chartData.dates, y: chartData.roas, type: 'scatter', mode: 'lines', name: 'ROAS',
+            line: { color: '#f59e0b', width: 2, dash: 'dot' },
+            yaxis: 'y2',
+            hovertemplate: 'ROAS: %{y:.2f}x<extra></extra>'
+        };
+
         const layoutTrend = {
             paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#9ca3af' },
             xaxis: { gridcolor: '#374151', title: 'Date' },
@@ -203,7 +370,16 @@
                 separatethousands: true,
                 tickformat: ',.0f'
             },
-            margin: { t: 20, l: 80, r: 20, b: 60 },
+            yaxis2: {
+                title: 'ROAS',
+                font: { color: '#f59e0b' },
+                overlaying: 'y',
+                side: 'right',
+                gridcolor: 'rgba(0,0,0,0)',
+                range: [0, Math.max(...chartData.roas) * 1.5],
+                tickformat: '.2f'
+            },
+            margin: { t: 20, l: 80, r: 60, b: 60 },
             legend: { orientation: 'h', y: 1.1 },
             hovermode: 'x unified',
             annotations: [
@@ -211,23 +387,34 @@
                 { x: '2023-11-11', y: Math.max(...chartData.revenue) * 0.9, xref: 'x', yref: 'y', text: '11.11 Sales', showarrow: true, arrowhead: 1, ax: 0, ay: -40 }
             ]
         };
-        Plotly.newPlot('main-chart', [traceSpend, traceRevenue], layoutTrend, { responsive: true });
+        Plotly.newPlot('main-chart', [traceSpend, traceRevenue, traceROAS], layoutTrend, { responsive: true });
 
-        // 2. Funnel Chart
-        const funnelData = JSON.parse(document.getElementById('funnel-data').textContent);
-        const traceFunnel = {
-            type: 'funnel',
-            y: funnelData.stages,
-            x: funnelData.values,
-            textinfo: "value+percent initial",
-            hovertemplate: '%{label}: %{value:,.0f}<br>%{percentInitial}<extra></extra>',
-            marker: { color: ["#60a5fa", "#3b82f6", "#ef4444", "#f59e0b", "#10b981"] }
-        };
-        const layoutFunnel = {
+
+        // 1.5 Industry Comparison Chart (Stacked Bar by Month)
+        const indMonthlyData = JSON.parse(document.getElementById('industry-monthly-data').textContent);
+
+        Plotly.newPlot('industry-chart', indMonthlyData, {
+            barmode: 'stack', // Stacked to show total while differentiating sectors
             paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#9ca3af' },
-            margin: { l: 150, r: 20, t: 20, b: 20 }
+            margin: { t: 20, l: 60, r: 20, b: 40 },
+            yaxis: { gridcolor: '#374151', title: 'Revenue', tickformat: ',.0f' }
+        }, { responsive: true });
+
+
+        // 1.6 Objective Comparison Chart
+        const objData = JSON.parse(document.getElementById('objective-chart-data').textContent);
+        const traceObjSpent = {
+            x: objData.labels, y: objData.spend, name: 'Spend', type: 'bar', marker: { color: '#f472b6' }
         };
-        Plotly.newPlot('funnel-chart', [traceFunnel], layoutFunnel, { responsive: true });
+        const traceObjRev = {
+            x: objData.labels, y: objData.revenue, name: 'Revenue', type: 'bar', marker: { color: '#22d3ee' }
+        };
+        Plotly.newPlot('objective-chart', [traceObjSpent, traceObjRev], {
+            barmode: 'group',
+            paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#9ca3af' },
+            margin: { t: 20, l: 60, r: 20, b: 40 },
+            yaxis: { gridcolor: '#374151', title: 'IDR', tickformat: ',.0f' }
+        }, { responsive: true });
 
         // 3. Allocation Pie Charts
         const allocActual = JSON.parse(document.getElementById('alloc-actual').textContent);
