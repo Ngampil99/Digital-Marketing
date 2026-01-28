@@ -105,6 +105,27 @@
     </div>
 
     <!-- Section 3: AI Strategic Budget Allocation -->
+    <div class="card mb-4 bg-gradient-to-r from-green-900/20 to-blue-900/20 border border-green-500/30">
+        <div class="grid grid-cols-3 gap-4 text-center">
+            <div>
+                <div class="text-sm text-gray-400 mb-1">Current Projected Revenue</div>
+                <div class="text-2xl font-bold text-white">IDR {{ optimization_metrics.current_revenue|idr_currency }}
+                </div>
+            </div>
+            <div class="border-l border-r border-gray-700">
+                <div class="text-sm text-gray-400 mb-1">Optimized Revenue (AI Forecast)</div>
+                <div class="text-2xl font-bold text-green-400">IDR {{
+                    optimization_metrics.optimized_revenue|idr_currency }}</div>
+            </div>
+            <div>
+                <div class="text-sm text-gray-400 mb-1">Potential Uplift</div>
+                <div class="text-3xl font-bold text-green-400">+{{ optimization_metrics.uplift_percentage|floatformat:1
+                    }}%</div>
+                <div class="text-xs text-gray-500">IDR {{ optimization_metrics.uplift_absolute|idr_currency }}</div>
+            </div>
+        </div>
+    </div>
+
     <div class="card mb-8">
         <h2 class="text-xl font-bold mb-6 text-green-400">AI Strategic Budget Allocation (2024 Forecast)</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
@@ -164,17 +185,27 @@
         const chartData = JSON.parse(document.getElementById('chart-data').textContent);
         const traceRevenue = {
             x: chartData.dates, y: chartData.revenue, type: 'scatter', mode: 'lines', name: 'Revenue',
-            line: { color: '#4ade80', width: 2 }
+            line: { color: '#4ade80', width: 2 },
+            hovertemplate: 'Revenue: IDR %{y:,.0f}<extra></extra>'
         };
         const traceSpend = {
             x: chartData.dates, y: chartData.traffic_spend.map((v, i) => v + chartData.sales_spend[i]),
             type: 'scatter', mode: 'lines', name: 'Total Spend',
-            line: { color: '#60a5fa', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(96, 165, 250, 0.1)'
+            line: { color: '#60a5fa', width: 2 }, fill: 'tozeroy', fillcolor: 'rgba(96, 165, 250, 0.1)',
+            hovertemplate: 'Spend: IDR %{y:,.0f}<extra></extra>'
         };
         const layoutTrend = {
             paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#9ca3af' },
-            xaxis: { gridcolor: '#374151', title: 'Date' }, yaxis: { gridcolor: '#374151', title: 'IDR' },
-            margin: { t: 20, l: 60, r: 20, b: 60 }, legend: { orientation: 'h', y: 1.1 },
+            xaxis: { gridcolor: '#374151', title: 'Date' },
+            yaxis: {
+                gridcolor: '#374151',
+                title: 'IDR',
+                separatethousands: true,
+                tickformat: ',.0f'
+            },
+            margin: { t: 20, l: 80, r: 20, b: 60 },
+            legend: { orientation: 'h', y: 1.1 },
+            hovermode: 'x unified',
             annotations: [
                 { x: '2023-04-15', y: Math.max(...chartData.revenue) * 0.8, xref: 'x', yref: 'y', text: 'Ramadan Peak', showarrow: true, arrowhead: 1, ax: 0, ay: -40 },
                 { x: '2023-11-11', y: Math.max(...chartData.revenue) * 0.9, xref: 'x', yref: 'y', text: '11.11 Sales', showarrow: true, arrowhead: 1, ax: 0, ay: -40 }
@@ -189,6 +220,7 @@
             y: funnelData.stages,
             x: funnelData.values,
             textinfo: "value+percent initial",
+            hovertemplate: '%{label}: %{value:,.0f}<br>%{percentInitial}<extra></extra>',
             marker: { color: ["#60a5fa", "#3b82f6", "#ef4444", "#f59e0b", "#10b981"] }
         };
         const layoutFunnel = {

@@ -97,6 +97,13 @@ def dashboard_view(request):
          # Scale back up to total budget for the chart
          recommended_allocation.append({'label': opt['channel'], 'value': opt['suggested_spend'] * 90})
 
+    # 6. Calculate Optimization Uplift Metrics
+    current_projected_revenue = sum(ch['current_spend'] * ch['roas'] for ch in channels)
+    optimized_projected_revenue = sum(opt['projected_revenue'] for opt in optimized_allocation) * 90  # Scale to match period
+    
+    uplift_absolute = optimized_projected_revenue - current_projected_revenue
+    uplift_percentage = (uplift_absolute / current_projected_revenue * 100) if current_projected_revenue > 0 else 0
+
     context = {
         'chart_data_json': chart_data,
         'funnel_data_json': funnel_metrics,
@@ -107,9 +114,18 @@ def dashboard_view(request):
         'summary_stats': {
             'total_revenue': df['revenue'].sum(),
             'total_spend': df['total_spend'].sum(),
-            'overall_roas': df['revenue'].sum() / df['total_spend'].sum() if df['total_spend'].sum() > 0 else 0
+            'overall_roas': df['revenue'].sum() / df['total_spend'].sum() if df['total_spend'].sum() > 0 else 0,
+            'total_impressions': df['impressions'].sum(),
+            'avg_daily_spend': df['total_spend'].mean(),
+            'avg_daily_revenue': df['revenue'].mean(),
         },
         'optimization': optimized_allocation,
+        'optimization_metrics': {
+            'current_revenue': current_projected_revenue,
+            'optimized_revenue': optimized_projected_revenue,
+            'uplift_percentage': uplift_percentage,
+            'uplift_absolute': uplift_absolute
+        },
         'anomalies_count': anomalies_fixed
     }
     
