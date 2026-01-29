@@ -45,8 +45,23 @@ class AdPerformance(models.Model):
         indexes = [
             models.Index(fields=['account_name', 'created_date']),
         ]
+        unique_together = ('created_date', 'account_name', 'campaign_objective')
         verbose_name = "Kinerja Iklan"
         verbose_name_plural = "Data Kinerja Iklan"
+
+    @classmethod
+    def get_funnel_stats(cls):
+        """
+        Centralized logic for Funnel Analysis.
+        Returns aggregated sum of funnel steps for 'Sales' objective.
+        """
+        return cls.objects.filter(campaign_objective='Sales').aggregate(
+            impressions=models.Sum('impressions'),
+            clicks=models.Sum('clicks'),
+            content_views=models.Sum('content_views'),
+            add_to_cart=models.Sum('add_to_cart'),
+            purchases=models.Sum('purchases')
+        )
 
     def __str__(self):
         return f"{self.account_name} - {self.created_date}"

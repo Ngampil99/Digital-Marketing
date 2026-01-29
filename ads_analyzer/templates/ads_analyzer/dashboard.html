@@ -42,7 +42,7 @@
     <div class="mb-8 flex justify-between items-center">
         <div>
             <h1 class="text-3xl font-bold text-white">AdPerformance Executive Overview</h1>
-            <p class="text-gray-400">Q1 2023 Performance Data (Indonesia Market)</p>
+            <p class="text-gray-400">{{ date_range }} Performance Data (Indonesia Market)</p>
         </div>
         <div class="bg-gray-800 px-4 py-2 rounded text-sm text-gray-300">
             Status: <span class="text-green-400 font-bold">Online</span> | Data Validated
@@ -63,19 +63,92 @@
             <div class="stat-label">Overall ROAS</div>
             <div class="stat-value">{{ summary_stats.overall_roas|floatformat:2 }}x</div>
         </div>
-        <div class="card border-l-4 border-blue-500">
-            <div class="stat-label">Data Health</div>
-            <div class="text-blue-400 font-bold">{{ anomalies_count }} Anomalies Fixed (SciPy/Pandas)</div>
+        <div role="button" tabindex="0" style="cursor: pointer !important; user-select: none !important;"
+            onclick="const m=document.getElementById('anomalyModal'); if(m){m.classList.remove('hidden'); m.classList.add('flex');} else {alert('Modal not found!');}"
+            class="card bg-gray-900 border border-green-500 hover:bg-gray-800 transition-colors cursor-pointer select-none relative z-10 group">
+            <div class="stat-label mb-1 text-green-400 group-hover:text-green-300">Data Health (Click Me)</div>
+            <div class="text-2xl font-bold text-white">{{ anomalies_count }} Anomalies Fixed</div>
+            <div class="text-xs text-gray-500 group-hover:text-gray-400">(SciPy/Pandas) - <span
+                    class="text-blue-400 underline decoration-blue-500 text-xs">View Details</span></div>
+        </div>
+    </div>
+
+    </div>
+
+    <!-- NEW SECTION: CTR Performance by Objective (Requested) -->
+    <div class="card mb-8 border-l-4 border-purple-500">
+        <h2 class="text-xl font-bold mb-4 text-white">CTR Performance by Objective</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for item in ctr_comparison %}
+            <div class="bg-gray-800 p-4 rounded">
+                <div class="text-sm text-gray-400 mb-1">{{ item.objective }} Objective</div>
+                <div class="flex justify-between items-end">
+                    <div
+                        class="text-2xl font-bold {% if item.objective == 'Traffic' %}text-purple-400{% else %}text-blue-400{% endif %}">
+                        {{ item.ctr|floatformat:2 }}%
+                    </div>
+                    <div class="text-xs text-gray-500 text-right">
+                        {{ item.clicks|intdot }} Clicks<br>from {{ item.impressions|intdot }} Impr.
+                    </div>
+                </div>
+                <div class="w-full bg-gray-700 h-1.5 rounded-full mt-2">
+                    <div class="h-1.5 rounded-full {% if item.objective == 'Traffic' %}bg-purple-500{% else %}bg-blue-500{% endif %}"
+                        style="width: {{ item.ctr|floatformat:0 }}%;"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- NEW SECTION: Objective Efficiency Analysis (ROAS Split) -->
+    <div class="card mb-8 border-l-4 border-green-500">
+        <h2 class="text-xl font-bold mb-4 text-white">Objective Efficiency Analysis (ROAS Split)</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for item in roas_by_objective %}
+            <div class="bg-gray-800 p-4 rounded border border-gray-700">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <div class="text-sm text-gray-400">{{ item.objective }} Objective</div>
+                        <div class="text-2xl font-bold text-white">{{ item.roas|floatformat:2 }}x</div>
+                    </div>
+
+                    {% if item.objective == 'Sales' and item.roas > 1 %}
+                    <span
+                        class="px-2 py-1 bg-green-900/50 text-green-400 text-xs font-bold rounded border border-green-700">
+                        PROFITABLE
+                    </span>
+                    {% elif item.objective == 'Traffic' %}
+                    <span class="px-2 py-1 bg-gray-700 text-gray-300 text-xs font-bold rounded">
+                        AWARENESS FOCUS
+                    </span>
+                    {% else %}
+                    <span class="px-2 py-1 bg-red-900/50 text-red-400 text-xs font-bold rounded border border-red-700">
+                        LOW ROI
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs border-t border-gray-700 pt-3 mt-1">
+                    <div>
+                        <span class="block text-gray-500">Spend</span>
+                        <span class="font-bold text-gray-300">IDR {{ item.spend|idr_currency }}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-gray-500">Revenue</span>
+                        <span
+                            class="font-bold {% if item.revenue > item.spend %}text-green-400{% else %}text-gray-400{% endif %}">
+                            IDR {{ item.revenue|idr_currency }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
 
     <!-- Deep Dive Metrics Row (Weighted Averages) -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="card bg-gray-800 border border-gray-700">
-            <div class="stat-label mb-1">CTR (Click-Through Rate)</div>
-            <div class="text-2xl font-bold text-yellow-400">{{ deep_dive_metrics.ctr|floatformat:2 }}%</div>
-            <div class="text-xs text-gray-500">Global Average</div>
-        </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
         <div class="card bg-gray-800 border border-gray-700">
             <div class="stat-label mb-1">CPC (Cost Per Click)</div>
             <div class="text-2xl font-bold text-blue-400">IDR {{ deep_dive_metrics.cpc|idr_currency }}</div>
@@ -93,6 +166,57 @@
         </div>
     </div>
 
+    <!-- NEW SECTION: Day-Parting & Dynamic Strategy -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <!-- Day-Parting Analysis Chart -->
+        <div class="card col-span-2">
+            <h2 class="text-xl font-bold mb-4 text-white">Day-Parting Analysis (Best ROAS Day)</h2>
+            <div id="day-chart" style="width:100%;height:300px;"></div>
+        </div>
+
+        <!-- Dynamic Phasing Strategy Card -->
+        <div class="card bg-gray-900 border border-gray-700">
+            <h2 class="text-xl font-bold mb-2 text-white">Dynamic Phasing Strategy</h2>
+            <div class="mb-4">
+                <span class="text-xs font-bold px-2 py-1 rounded 
+                    {% if phasing_strategy.color == 'blue' %}bg-blue-500/20 text-blue-400
+                    {% elif phasing_strategy.color == 'yellow' %}bg-yellow-500/20 text-yellow-400
+                    {% else %}bg-green-500/20 text-green-400{% endif %}">
+                    {{ phasing_strategy.phase }}
+                </span>
+            </div>
+
+            <p class="text-gray-400 text-sm mb-6">
+                Current Strategy: <span class="text-white font-bold">{{ phasing_strategy.plan }}</span>.
+                Focus allocation based on month progression.
+            </p>
+
+            <!-- Progress Bars -->
+            <div class="mb-4">
+                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>Traffic / Awareness</span>
+                    <span>{{ phasing_strategy.traffic_alloc }}%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-2.5">
+                    <div class="bg-blue-500 h-2.5 rounded-full" style="width: {{ phasing_strategy.traffic_alloc }}%;">
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>Sales / Conversion</span>
+                    <span>{{ phasing_strategy.sales_alloc }}%</span>
+                </div>
+                <div class="w-full bg-gray-700 rounded-full h-2.5">
+                    <div class="bg-green-500 h-2.5 rounded-full" style="width: {{ phasing_strategy.sales_alloc }}%;">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
     <!-- Section: Monthly Global Trends (Modul 2) -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <!-- Monthly Financials (Spend vs Revenue vs Calculate Monthly ROAS) -->
@@ -107,6 +231,41 @@
             <div id="monthly-efficiency-chart" class="h-[380px]"></div>
         </div>
     </div>
+    <!-- Section: Top 10 Clients Table -->
+    <div class="card mb-8 overflow-hidden">
+        <h2 class="text-xl font-bold mb-4 text-white">Top 10 High Performing Clients (by Revenue)</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-400">
+                <thead class="text-xs text-gray-400 uppercase bg-gray-700/50">
+                    <tr>
+                        <th class="px-4 py-3">Client Name</th>
+                        <th class="px-4 py-3 text-right">Spend</th>
+                        <th class="px-4 py-3 text-right">Revenue</th>
+                        <th class="px-4 py-3 text-right">Purchases</th>
+                        <th class="px-4 py-3 text-right">ROAS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in clients_data %}
+                    <tr class="border-b border-gray-700 hover:bg-gray-700/20">
+                        <td class="px-4 py-3 font-medium text-white">{{ client.name }}</td>
+                        <td class="px-4 py-3 text-right">IDR {{ client.spend|idr_currency }}</td>
+                        <td class="px-4 py-3 text-right text-green-400">IDR {{ client.revenue|idr_currency }}</td>
+                        <td class="px-4 py-3 text-right">{{ client.purchases }}</td>
+                        <td class="px-4 py-3 text-right font-bold 
+                            {% if client.roas > 2 %}text-green-400
+                            {% elif client.roas < 1 %}text-red-400
+                            {% else %}text-yellow-400{% endif %}">
+                            {{ client.roas|floatformat:2 }}x
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Section: Annual Revenue & Spend Trend -->
     <div class="card mb-8">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-bold text-white">Annual Revenue & Spend Trend (Jan - Dec 2023)</h2>
@@ -180,18 +339,36 @@
         </div>
     </div>
 
-    <!-- Section 2.5: Comparison Charts Row -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-        <!-- Industry Comparison Chart -->
-        <div class="card h-[400px]">
-            <h2 class="text-xl font-bold mb-4 text-purple-400">Industry Monthly Trends (Seasonality)</h2>
-            <div id="industry-chart" class="h-[320px]"></div>
+    <!-- NEW SECTION: Detailed Performance Analytics (CTR, Industry, Peak) -->
+    <div class="card border-l-4 border-purple-500 mb-8">
+        <div class="stat-label">Avg. CTR (Click-Through Rate)</div>
+        <div class="stat-value text-purple-400">{{ ctr_metrics.overall|floatformat:2 }}%</div>
+        <div class="text-xs text-gray-500 mt-1">
+            {% for stat in ctr_metrics.by_objective %}
+            {{ stat.objective }}: <span class="text-white">{{ stat.ctr|floatformat:2 }}%</span> |
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+
+        <div class="card">
+            <h2 class="text-xl font-bold mb-4 text-white">Industry Performance Matrix</h2>
+            <p class="text-sm text-gray-400 mb-2">Comparing Revenue (Bars) vs ROAS (Line)</p>
+            <div id="industry-chart" style="width:100%;height:350px;"></div>
         </div>
 
-        <!-- Objective Comparison Chart -->
-        <div class="card h-[400px]">
-            <h2 class="text-xl font-bold mb-4 text-blue-400">Campaign Objective Analysis</h2>
-            <div id="objective-chart" class="h-[320px]"></div>
+        <div class="card bg-gray-800">
+            <h2 class="text-xl font-bold mb-4 text-yellow-400">⚡ Peak Performance Insight</h2>
+            <div class="flex items-center justify-center h-48 flex-col text-center">
+                <p class="text-gray-400">Best Performing Month</p>
+                <h3 class="text-4xl font-bold text-white my-2">{{ peak_performance.month }}</h3>
+                <p class="text-green-400 font-bold">IDR {{ peak_performance.value|idr_currency }} Revenue</p>
+                <p class="text-xs text-gray-500 mt-4 px-8">
+                    Recommendation: Prepare higher budget allocation 2 weeks before {{ peak_performance.month }} next
+                    year to maximize seasonality.
+                </p>
+            </div>
         </div>
     </div>
 
@@ -235,6 +412,177 @@
                             <td class="p-2 text-blue-300">{{ opt.roas|floatformat:2 }}x</td>
                             <td class="p-2">IDR {{ opt.suggested_spend|idr_currency }}</td>
                             <td class="p-2 text-green-300">IDR {{ opt.projected_revenue|idr_currency }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section: Client Tactical Planner (Calendar) -->
+    <div class="card mb-8">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h2 class="text-xl font-bold text-white">🗓️ Client Tactical Planner</h2>
+                <p class="text-sm text-gray-400">Automated Daily Recommendation for: <span
+                        class="text-green-400 font-bold">{{ tactical_client }}</span> | Period: {{ tactical_month }}</p>
+            </div>
+            <div class="text-right">
+                <span class="text-xs text-gray-500 block">Total Monthly Budget Allocation</span>
+                <span class="text-xl font-bold text-white">100%</span>
+            </div>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-6">
+            <div class="w-full lg:w-2/3">
+                <div class="grid grid-cols-7 gap-2 mb-2 text-center text-gray-400 text-sm font-bold">
+                    <div>Sun</div>
+                    <div>Mon</div>
+                    <div>Tue</div>
+                    <div>Wed</div>
+                    <div>Thu</div>
+                    <div>Fri</div>
+                    <div>Sat</div>
+                </div>
+                <div class="grid grid-cols-7 gap-2">
+                    {% for day in tactical_plan %}
+                    <button onclick="showDayDetails('{{ day.day }}')"
+                        class="p-2 rounded border border-gray-700 hover:border-white transition-all relative h-24 text-left flex flex-col justify-between group focus:ring-2 focus:ring-green-500
+                            {% if day.color == 'green' %} bg-green-900/20 {% elif day.color == 'blue' %} bg-blue-900/20 {% else %} bg-yellow-900/20 {% endif %}">
+
+                        <span class="font-bold text-gray-300">{{ day.day }}</span>
+
+                        <div class="w-full">
+                            <div class="text-xs text-gray-500 mb-1">{{ day.day_name|slice:":3" }}</div>
+                            <div
+                                class="text-xs font-bold {% if day.color == 'green' %}text-green-400{% elif day.color == 'blue' %}text-blue-400{% else %}text-yellow-400{% endif %}">
+                                {{ day.budget_percent }}%
+                            </div>
+                            <div class="w-full bg-gray-700 h-1 rounded-full mt-1">
+                                <div class="h-1 rounded-full {% if day.color == 'green' %}bg-green-500{% elif day.color == 'blue' %}bg-blue-500{% else %}bg-yellow-500{% endif %}"
+                                    style="width: {{ day.budget_percent|floatformat:0 }}%;"></div>
+                            </div>
+                        </div>
+
+                        <span id="data-{{ day.day }}" class="hidden" data-date="{{ day.full_date }}"
+                            data-strategy="{{ day.strategy }}" data-split="{{ day.split }}"
+                            data-action="{{ day.action }}" data-budget="{{ day.budget_percent }}"
+                            data-phase="{{ day.phase }}">
+                        </span>
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="w-full lg:w-1/3 bg-gray-800 rounded p-6 border border-gray-700 sticky top-4 h-fit">
+                <h3 class="text-lg font-bold text-gray-400 mb-4 uppercase tracking-wider">Daily Execution Guide</h3>
+
+                <div id="detail-panel">
+                    <div class="mb-6">
+                        <p class="text-sm text-gray-500">Selected Date</p>
+                        <h2 id="detail-date" class="text-3xl font-bold text-white">Select a Date</h2>
+                        <span id="detail-phase"
+                            class="inline-block mt-2 px-3 py-1 rounded text-xs font-bold bg-gray-700 text-gray-300">Phase</span>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div>
+                            <div class="flex justify-between items-end mb-1">
+                                <p class="text-sm text-gray-400">Daily Budget Allocation</p>
+                                <p id="detail-budget" class="text-2xl font-bold text-green-400">0%</p>
+                            </div>
+                            <div class="text-xs text-gray-500">Percentage of Total Monthly Budget</div>
+                        </div>
+
+                        <hr class="border-gray-700">
+
+                        <div>
+                            <p class="text-sm text-gray-400 mb-2">Strategy Focus</p>
+                            <h4 id="detail-strategy" class="text-xl font-bold text-white mb-1">-</h4>
+                            <p id="detail-split" class="text-yellow-400 font-mono text-sm">-</p>
+                        </div>
+
+                        <div class="bg-gray-700/50 p-4 rounded border-l-4 border-blue-500">
+                            <p class="text-xs text-blue-300 uppercase font-bold mb-1">Recommended Action</p>
+                            <p id="detail-action" class="text-gray-300 text-sm italic">Click a date on the calendar to
+                                see recommendation.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW SECTION: Client Deep Dive & Master Plan -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+
+        <!-- Client Deep Dive -->
+        <div class="card overflow-hidden">
+            <h2 class="text-xl font-bold mb-4 text-white">Client Deep Dive (Best Times)</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-400">
+                    <thead class="bg-gray-700/50 uppercase text-xs">
+                        <tr>
+                            <th class="px-3 py-2">Client</th>
+                            <th class="px-3 py-2">Best Day (ROAS)</th>
+                            <th class="px-3 py-2">Best Month (Rev)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {% for c in client_insights %}
+                        <tr class="hover:bg-gray-700/20">
+                            <td class="px-3 py-2 font-bold text-white">{{ c.name }}</td>
+                            <td class="px-3 py-2">
+                                <div class="text-green-400 font-bold">{{ c.best_day }}</div>
+                                <div class="text-xs text-gray-500">Avg ROAS: {{ c.max_roas|floatformat:2 }}x</div>
+                            </td>
+                            <td class="px-3 py-2">
+                                <div class="text-yellow-400 font-bold">{{ c.best_month }}</div>
+                                <div class="text-xs text-gray-500">IDR {{ c.max_revenue|idr_currency }}</div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Annual Master Plan -->
+        <div class="card overflow-hidden">
+            <h2 class="text-xl font-bold mb-4 text-white">Annual Master Plan (Budget & Strategy)</h2>
+            <div class="overflow-y-auto h-[400px] pr-2 custom-scrollbar">
+                <table class="w-full text-sm text-left text-gray-400">
+                    <thead class="bg-gray-700/50 uppercase text-xs sticky top-0 bg-gray-900">
+                        <tr>
+                            <th class="px-3 py-2">Month</th>
+                            <th class="px-3 py-2">Budget %</th>
+                            <th class="px-3 py-2">Strategy</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {% for plan in master_plan %}
+                        <tr class="hover:bg-gray-700/20 border-l-4 
+                            {% if plan.color == 'green' %}border-green-500
+                            {% elif plan.color == 'yellow' %}border-yellow-500
+                            {% else %}border-blue-500{% endif %}">
+                            <td class="px-3 py-3 font-bold text-white">{{ plan.month }}</td>
+                            <td class="px-3 py-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono">{{ plan.allocation_pct|floatformat:1 }}%</span>
+                                    <div class="w-16 bg-gray-700 rounded-full h-1.5 hidden md:block">
+                                        <div class="bg-white h-1.5 rounded-full"
+                                            style="width:{{ plan.allocation_pct }}%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-3 py-3">
+                                <div
+                                    class="{% if plan.color == 'green' %}text-green-400 font-bold{% elif plan.color == 'yellow' %}text-yellow-400{% else %}text-blue-400{% endif %}">
+                                    {{ plan.strategy }}
+                                </div>
+                                <div class="text-xs text-gray-500">Focus: {{ plan.focus }}</div>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -342,6 +690,36 @@
 
         // ... (Existing charts below) ...
 
+
+        function showDayDetails(day) {
+            // Check if element exists before accessing
+            var dataEl = document.getElementById('data-' + day);
+            if (!dataEl) return;
+
+            // Update Tampilan Panel Kanan
+            const fields = ['date', 'budget', 'strategy', 'split', 'action', 'phase'];
+            document.getElementById('detail-date').innerText = dataEl.dataset.date;
+            document.getElementById('detail-budget').innerText = dataEl.dataset.budget + "%";
+            document.getElementById('detail-strategy').innerText = dataEl.dataset.strategy;
+            document.getElementById('detail-split').innerText = dataEl.dataset.split;
+            document.getElementById('detail-action').innerText = '"' + dataEl.dataset.action + '"';
+            document.getElementById('detail-phase').innerText = dataEl.dataset.phase;
+
+            // Update warna badge phase
+            const phase = dataEl.dataset.phase;
+            const badge = document.getElementById('detail-phase');
+            badge.className = "inline-block mt-2 px-3 py-1 rounded text-xs font-bold " +
+                (phase === 'Conversion' ? 'bg-green-900 text-green-300' :
+                    phase === 'Browsing' ? 'bg-blue-900 text-blue-300' : 'bg-yellow-900 text-yellow-300');
+        }
+
+        // Auto select hari pertama saat load
+        window.addEventListener('load', function () {
+            if (document.getElementById('data-1')) {
+                showDayDetails('1');
+            }
+        });
+
         const traceRevenue = {
             x: chartData.dates, y: chartData.revenue, type: 'scatter', mode: 'lines', name: 'Revenue',
             line: { color: '#4ade80', width: 2 },
@@ -390,31 +768,62 @@
         Plotly.newPlot('main-chart', [traceSpend, traceRevenue, traceROAS], layoutTrend, { responsive: true });
 
 
-        // 1.5 Industry Comparison Chart (Stacked Bar by Month)
-        const indMonthlyData = JSON.parse(document.getElementById('industry-monthly-data').textContent);
 
-        Plotly.newPlot('industry-chart', indMonthlyData, {
-            barmode: 'stack', // Stacked to show total while differentiating sectors
+        // NEW: Modul 2 Industry Performance Chart (Revenue vs ROAS)
+        const indData = JSON.parse('{{ industry_chart_json| escapejs}}');
+
+        var traceInd1 = {
+            x: indData.labels,
+            y: indData.revenue,
+            name: 'Revenue (IDR)',
+            type: 'bar',
+            marker: { color: '#3b82f6' }
+        };
+
+        var traceInd2 = {
+            x: indData.labels,
+            y: indData.roas,
+            name: 'ROAS (x)',
+            yaxis: 'y2',
+            type: 'scatter',
+            mode: 'lines+markers',
+            line: { color: '#ef4444', width: 3 }
+        };
+
+        var layoutInd = {
+            title: { text: '', font: { color: '#fff' } },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            font: { color: '#9ca3af' },
+            yaxis: { title: 'Revenue', gridcolor: '#374151' },
+            yaxis2: {
+                title: 'ROAS',
+                overlaying: 'y',
+                side: 'right',
+                showgrid: false
+            },
+            legend: { orientation: 'h', y: -0.2 },
+            margin: { l: 50, r: 50, t: 20, b: 50 }
+        };
+
+        Plotly.newPlot('industry-chart', [traceInd1, traceInd2], layoutInd, { responsive: true });
+
+
+
+        // NEW: Day-Parting Chart
+        const dayData = JSON.parse('{{ day_part_json| escapejs}}');
+
+        Plotly.newPlot('day-chart', [{
+            x: dayData.days,
+            y: dayData.roas,
+            type: 'bar',
+            marker: { color: dayData.colors }
+        }], {
             paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#9ca3af' },
-            margin: { t: 20, l: 60, r: 20, b: 40 },
-            yaxis: { gridcolor: '#374151', title: 'Revenue', tickformat: ',.0f' }
+            yaxis: { title: 'Avg ROAS', gridcolor: '#374151' },
+            margin: { t: 20, l: 50, r: 20, b: 40 }
         }, { responsive: true });
 
-
-        // 1.6 Objective Comparison Chart
-        const objData = JSON.parse(document.getElementById('objective-chart-data').textContent);
-        const traceObjSpent = {
-            x: objData.labels, y: objData.spend, name: 'Spend', type: 'bar', marker: { color: '#f472b6' }
-        };
-        const traceObjRev = {
-            x: objData.labels, y: objData.revenue, name: 'Revenue', type: 'bar', marker: { color: '#22d3ee' }
-        };
-        Plotly.newPlot('objective-chart', [traceObjSpent, traceObjRev], {
-            barmode: 'group',
-            paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#9ca3af' },
-            margin: { t: 20, l: 60, r: 20, b: 40 },
-            yaxis: { gridcolor: '#374151', title: 'IDR', tickformat: ',.0f' }
-        }, { responsive: true });
 
         // 3. Allocation Pie Charts
         const allocActual = JSON.parse(document.getElementById('alloc-actual').textContent);
@@ -435,6 +844,111 @@
             type: 'pie', hole: 0.4, textinfo: 'label+percent', marker: { colors: ['#6366f1', '#ec4899', '#14b8a6'] }
         }], pieLayout, { responsive: true });
 
+    </script>
+    <!-- Anomaly Report Modal -->
+    <div id="anomalyModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background overlay -->
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true"
+                onclick="toggleModal('anomalyModal')"></div>
+
+            <!-- Modal Panel -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div
+                class="inline-block align-bottom bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full border border-gray-700">
+                <div class="bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-xl leading-6 font-medium text-white mb-4" id="modal-title">
+                                Data Integrity & Anomaly Report
+                            </h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-400 mb-4">
+                                    The system automatically detected and corrected <strong>{{ anomaly_report.total
+                                        }}</strong> quality issues during ingestion.
+                                    The following rules were applied to ensure analytical accuracy.
+                                </p>
+
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full text-sm text-gray-300">
+                                        <thead class="bg-gray-700/50 text-xs uppercase font-medium text-gray-400">
+                                            <tr>
+                                                <th class="px-4 py-2 text-left">Anomaly Rule</th>
+                                                <th class="px-4 py-2 text-right">Count</th>
+                                                <th class="px-4 py-2 text-left">Status</th>
+                                                <th class="px-4 py-2 text-left">Auto-Fix Action</th>
+                                                <th class="px-4 py-2 text-center">Severity</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-700">
+                                            {% for item in anomaly_report.details %}
+                                            <tr>
+                                                <td class="px-4 py-3 font-medium">{{ item.rule }}</td>
+                                                <td
+                                                    class="px-4 py-3 text-right font-bold {% if item.count > 0 %}text-red-400{% else %}text-green-400{% endif %}">
+                                                    {{ item.count }}
+                                                </td>
+                                                <td class="px-4 py-3">
+                                                    <span
+                                                        class="px-2 py-1 rounded text-xs 
+                                                        {% if item.count > 0 %}bg-green-500/20 text-green-400{% else %}bg-gray-700 text-gray-400{% endif %}">
+                                                        {{ item.status }}
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-3 text-gray-400 italic">{{ item.action }}</td>
+                                                <td class="px-4 py-3 text-center">
+                                                    <span class="px-2 py-1 rounded text-xs
+                                                        {% if item.severity == 'Critical' %}bg-red-500/20 text-red-500
+                                                        {% elif item.severity == 'High' %}bg-orange-500/20 text-orange-500
+                                                        {% else %}bg-blue-500/20 text-blue-500{% endif %}">
+                                                        {{ item.severity }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-700/50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                        onclick="toggleModal('anomalyModal')">
+                        Close Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Modal -->
+    <!-- JavaScript for Modal -->
+    <script>
+        function toggleModal(modalID) {
+            const modal = document.getElementById(modalID);
+            const overlay = modal.querySelector('div[onclick*="toggleModal"]'); // Optional: cleanup if needed
+
+            if (modal.classList.contains('hidden')) {
+                // Open
+                modal.classList.remove('hidden');
+                modal.classList.add('flex'); // Use flex to align center if designed so, or block
+                // Specifically for valid tailwind centering:
+                // fixed inset-0 z-50 flex items-center justify-center...
+                // The current structure uses nested divs for centering.
+                // Just removing hidden allows 'block' which might rely on children for centering.
+                // Let's stick to simple toggle for now, assuming the CSS handles layout.
+            } else {
+                // Close
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+        // Expose to window
+        window.toggleModal = toggleModal;
     </script>
 </body>
 
