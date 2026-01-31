@@ -328,43 +328,65 @@ def dashboard_view(request):
                 month_days_map.append({'date': date_obj, 'day_name': day_name, 'weight': weight})
                 total_month_weight += weight
             
-            # 4. Finalize Daily Plan
+            # 4. Get master plan strategy for this month
+            # Define monthly strategy mapping (same as master_plan logic)
+            if target_month == 4:  # April / Ramadan
+                month_strategy = "Sales Push (Ramadan)"
+                month_focus = "Conversion"
+                base_split = "20% Traffic / 80% Sales"
+                base_action = "Aggressive Conversion Campaigns"
+                base_color = "green"
+            elif target_month == 12:  # Dec / Harbolnas
+                month_strategy = "Mega Sales (Harbolnas)"
+                month_focus = "Conversion"
+                base_split = "20% Traffic / 80% Sales"
+                base_action = "Flash Sales & Promo Offers"
+                base_color = "green"
+            elif target_month in [5, 6]:  # May-Jun
+                month_strategy = "Sustain / Retargeting"
+                month_focus = "Consideration"
+                base_split = "40% Traffic / 60% Sales"
+                base_action = "Engagers & Visitors Retargeting"
+                base_color = "yellow"
+            else:  # Jan-Mar, Jul-Nov (Traffic months)
+                month_strategy = "Traffic & Awareness"
+                month_focus = "Traffic"
+                base_split = "70% Traffic / 30% Sales"
+                base_action = "Broad Audience Targeting"
+                base_color = "blue"
+            
+            # 5. Finalize Daily Plan - use monthly strategy but adjust intensity by week
             for item in month_days_map:
                 # Daily Budget %
                 daily_percent = (item['weight'] / total_month_weight * 100) if total_month_weight > 0 else (100/num_days)
                 
                 day_num = item['date'].day
                 
-                # Strategy logic
-                if day_num <= 15:
-                    phase = "Browsing"
-                    strategy = "Traffic Push"
-                    split = "70% Traffic / 30% Sales"
-                    action = "Broad Audience Targeting"
-                    color = "blue"
-                elif 16 <= day_num <= 24:
-                    phase = "Consideration"
-                    strategy = "Warm Retargeting"
-                    split = "50% Traffic / 50% Sales"
-                    action = "Engagers & Visitors Retargeting"
-                    color = "yellow"
-                else: # Payday
-                    phase = "Conversion"
-                    strategy = "Hard Sales (Payday)"
-                    split = "10% Traffic / 90% Sales"
-                    action = "Cart Abandoners & Promo Offers"
-                    color = "green"
+                # Sub-phase within month (intensity adjustment, but same overall focus)
+                if day_num <= 10:
+                    phase = f"{month_focus} - Early Month"
+                    intensity = "Building"
+                elif day_num <= 20:
+                    phase = f"{month_focus} - Mid Month"
+                    intensity = "Scaling"
+                else:  # Payday period
+                    phase = f"{month_focus} - Payday Push"
+                    intensity = "Maximum"
+                    # Slight adjustment for payday regardless of month strategy
+                    if month_focus != "Conversion":
+                        base_action = base_action + " + Payday Boost"
                     
                 tactical_plan.append({
                     'day': day_num,
                     'day_name': item['day_name'],
                     'full_date': item['date'].strftime('%Y-%m-%d'),
                     'budget_percent': round(daily_percent, 2),
-                    'strategy': strategy,
-                    'split': split,
-                    'action': action,
-                    'color': color,
-                    'phase': phase
+                    'strategy': month_strategy,
+                    'split': base_split,
+                    'action': base_action,
+                    'color': base_color,
+                    'phase': phase,
+                    'intensity': intensity
                 })
 
     # --- [NEW FEATURE] DYNAMIC PHASING STRATEGY ---
