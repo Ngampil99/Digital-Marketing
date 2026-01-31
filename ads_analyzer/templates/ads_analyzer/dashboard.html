@@ -606,18 +606,18 @@
                     {% for day in tactical_plan %}
                     <button onclick="showDayDetails('{{ day.day }}')"
                         class="p-2 rounded border border-gray-700 hover:border-white transition-all relative h-24 text-left flex flex-col justify-between group focus:ring-2 focus:ring-green-500
-                            {% if day.color == 'green' %} bg-green-900/20 {% elif day.color == 'blue' %} bg-blue-900/20 {% else %} bg-yellow-900/20 {% endif %}">
+                            {% if day.color == 'green' %} bg-green-900/20 {% elif day.color == 'blue' %} bg-blue-900/20 {% elif day.color == 'red' %} bg-red-900/20 border-red-900/50 {% else %} bg-yellow-900/20 {% endif %}">
 
                         <span class="font-bold text-gray-300">{{ day.day }}</span>
 
                         <div class="w-full">
                             <div class="text-xs text-gray-500 mb-1">{{ day.day_name|slice:":3" }}</div>
                             <div
-                                class="text-xs font-bold {% if day.color == 'green' %}text-green-400{% elif day.color == 'blue' %}text-blue-400{% else %}text-yellow-400{% endif %}">
+                                class="text-xs font-bold {% if day.color == 'green' %}text-green-400{% elif day.color == 'blue' %}text-blue-400{% elif day.color == 'red' %}text-red-400{% else %}text-yellow-400{% endif %}">
                                 {{ day.budget_percent }}%
                             </div>
                             <div class="w-full bg-gray-700 h-1 rounded-full mt-1">
-                                <div class="h-1 rounded-full {% if day.color == 'green' %}bg-green-500{% elif day.color == 'blue' %}bg-blue-500{% else %}bg-yellow-500{% endif %}"
+                                <div class="h-1 rounded-full {% if day.color == 'green' %}bg-green-500{% elif day.color == 'blue' %}bg-blue-500{% elif day.color == 'red' %}bg-red-500{% else %}bg-yellow-500{% endif %}"
                                     style="width: {{ day.budget_percent|floatformat:0 }}%;"></div>
                             </div>
                         </div>

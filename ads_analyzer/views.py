@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.db import models
 from django.db.models import Sum, F, Case, When, Value, FloatField
-from django.db.models.functions import TruncMonth, TruncDay
+from django.db.models.functions import TruncMonth, TruncDay, ExtractDay
 from django.core.serializers.json import DjangoJSONEncoder
 import json
 import pandas as pd
@@ -12,6 +12,36 @@ from datetime import timedelta
 from .models import AdPerformance
 # Force Reload: Fix Data Health Modal Cachingimize
 from ads_analyzer.models import AdPerformance
+
+def get_daily_tactical_zones():
+    """
+    Calculates Dead Zones (Stop-Loss) and Gold Zones (Scale-Up) based on historical daily ROAS.
+    Returns a dict with 'dead' and 'gold' lists of day numbers.
+    """
+    daily_stats = AdPerformance.objects.annotate(
+        day=ExtractDay('created_date')
+    ).values('day').annotate(
+        total_spend=Sum('amount_spent'),
+        total_revenue=Sum('purchase_value')
+    ).order_by('day')
+    
+    df = pd.DataFrame(list(daily_stats))
+    zones = {'dead': [], 'gold': []}
+    
+    if not df.empty:
+        df['total_spend'] = df['total_spend'].astype(float)
+        df['total_revenue'] = df['total_revenue'].astype(float)
+        df['roas'] = df.apply(lambda x: x['total_revenue'] / x['total_spend'] if x['total_spend'] > 0 else 0, axis=1)
+        
+        # Dead Zones: 3 days with lowest ROAS
+        dead = df.nsmallest(3, 'roas')
+        zones['dead'] = [int(d) for d in dead['day'].tolist()]
+        
+        # Gold Zones: 3 days with highest ROAS
+        gold = df.nlargest(3, 'roas')
+        zones['gold'] = [int(d) for d in gold['day'].tolist()]
+        
+    return zones
 
 def dashboard_view(request):
     # --- [ANOMALY DETECTION & DATA CLEANING] ---
@@ -304,6 +334,9 @@ def dashboard_view(request):
         else:
             tactical_client_name = top_client_insights[0]['name']
         
+        # [NEW] Get Data-Derived Strategic Zones
+        tactical_zones = get_daily_tactical_zones()
+        
         # 1. Get historical data for this client FROM ROW-LEVEL DF
         t_client_df = df_clients[df_clients['account_name'] == tactical_client_name].copy()
         
@@ -356,37 +389,41 @@ def dashboard_view(request):
                 base_color = "blue"
             
             # 5. Finalize Daily Plan - use monthly strategy but adjust intensity by week
-            for item in month_days_map:
-                # Daily Budget %
-                daily_percent = (item['weight'] / total_month_weight * 100) if total_month_weight > 0 else (100/num_days)
+            # 6. Apply Phase Logic (Monthly -> Daily)
+            for d in month_days_map:
+                phase = "Normal Phase"
+                action = base_action
+                color = base_color
                 
-                day_num = item['date'].day
+                # Apply Daily Tactical Overrides (Data-Driven)
+                day_num = d['date'].day
+                zone_type = 'neutral'
                 
-                # Sub-phase within month (intensity adjustment, but same overall focus)
-                if day_num <= 10:
-                    phase = f"{month_focus} - Early Month"
-                    intensity = "Building"
-                elif day_num <= 20:
-                    phase = f"{month_focus} - Mid Month"
-                    intensity = "Scaling"
-                else:  # Payday period
-                    phase = f"{month_focus} - Payday Push"
-                    intensity = "Maximum"
-                    # Slight adjustment for payday regardless of month strategy
-                    if month_focus != "Conversion":
-                        base_action = base_action + " + Payday Boost"
-                    
+                if day_num in tactical_zones['dead']:
+                     phase = "STOP-LOSS ZONE"
+                     action = "PAUSE / REDUCE Traffic (Low ROAS Area)"
+                     color = "red" # Distinctive color for danger
+                     zone_type = 'dead'
+                elif day_num in tactical_zones['gold']:
+                     phase = "SCALE-UP ZONE"
+                     action = "INCREASE Sales Budget (+30%) (High ROAS Area)"
+                     color = "green" 
+                     zone_type = 'gold'
+                
+                # Calculate daily budget portion (normalized)
+                daily_budget_pct = (d['weight'] / total_month_weight) * 100
+                 
                 tactical_plan.append({
                     'day': day_num,
-                    'day_name': item['day_name'],
-                    'full_date': item['date'].strftime('%Y-%m-%d'),
-                    'budget_percent': round(daily_percent, 2),
+                    'full_date': d['date'].strftime('%Y-%m-%d'),
+                    'day_name': d['day_name'], # e.g. Monday
+                    'budget_percent': round(daily_budget_pct, 1),
                     'strategy': month_strategy,
                     'split': base_split,
-                    'action': base_action,
-                    'color': base_color,
                     'phase': phase,
-                    'intensity': intensity
+                    'action': action,
+                    'color': color,
+                    'zone_type': zone_type
                 })
 
     # --- [NEW FEATURE] DYNAMIC PHASING STRATEGY ---
@@ -1038,6 +1075,7 @@ def strategic_report_view(request):
         'funnel_data': funnel_data,
         'trend_data': trend_data,
         'seasonality_data': seasonality_data,
+        'tactical_zones': get_daily_tactical_zones(),
     }
     
     return render(request, 'ads_analyzer/strategic_report.html', context)
