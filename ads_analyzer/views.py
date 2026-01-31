@@ -249,18 +249,40 @@ def dashboard_view(request):
             c_day_analysis = client_df.groupby('day_name', observed=False)['roas'].mean()
             c_best_day = c_day_analysis.idxmax() if not c_day_analysis.empty else "N/A"
             c_avg_roas = c_day_analysis.max() if not c_day_analysis.empty else 0
-            
             # Best Month (Total Revenue)
             c_month_analysis = client_df.groupby('month_str')['revenue'].sum()
             c_best_month = c_month_analysis.idxmax() if not c_month_analysis.empty else "N/A"
             c_max_rev = c_month_analysis.max() if not c_month_analysis.empty else 0
+            
+            # [NEW] Saturation Analysis (Spend Efficiency)
+            # Correlation between Spend and ROAS
+            if len(client_df) > 5:
+                c_corr = client_df['spend'].corr(client_df['roas'])
+                if pd.isna(c_corr): c_corr = 0
+            else:
+                c_corr = 0
+            
+            c_efficiency_status = "Stable"
+            c_efficiency_color = "text-gray-400"
+            if c_corr < -0.5:
+                c_efficiency_status = "SATURATED (Scale Down!)"
+                c_efficiency_color = "text-red-500"
+            elif c_corr > 0.5:
+                c_efficiency_status = "HIGH POTENTIAL (Scale Up!)"
+                c_efficiency_color = "text-green-500"
+            elif -0.5 <= c_corr < 0:
+                c_efficiency_status = "Declining Efficiency"
+                c_efficiency_color = "text-yellow-500"
             
             client_insights.append({
                 'name': client,
                 'best_day': c_best_day,
                 'max_roas': c_avg_roas,
                 'best_month': c_best_month,
-                'max_revenue': c_max_rev
+                'max_revenue': c_max_rev,
+                'saturation_corr': round(c_corr, 2),
+                'efficiency_status': c_efficiency_status,
+                'efficiency_color': c_efficiency_color
             })
     
     # Sort by Max Revenue
@@ -334,6 +356,28 @@ def dashboard_view(request):
         else:
             tactical_client_name = top_client_insights[0]['name']
         
+        # [NEW] Extract Efficiency Status for Selected Client
+        # Find the dictionary in client_insights that matches tactical_client_name
+        selected_insight = next((item for item in client_insights if item['name'] == tactical_client_name), None)
+        
+        saturation_corr = 0
+        efficiency_status = "N/A"
+        efficiency_color = "text-gray-400"
+        efficiency_recommendation = "Maintain Budget"
+        
+        if selected_insight:
+            saturation_corr = selected_insight.get('saturation_corr', 0)
+            efficiency_status = selected_insight.get('efficiency_status', "Stable")
+            efficiency_color = selected_insight.get('efficiency_color', "text-gray-400")
+            
+            # Generate logic-based recommendation text
+            if saturation_corr < -0.5:
+                efficiency_recommendation = "CUT BUDGET & FIX CREATIVE (Saturated)"
+            elif saturation_corr > 0.5:
+                efficiency_recommendation = "INCREASE BUDGET 20% (High Potential)"
+            else:
+                 efficiency_recommendation = "Maintain Current Budget Allocation"
+
         # [NEW] Get Data-Derived Strategic Zones
         tactical_zones = get_daily_tactical_zones()
         
@@ -886,11 +930,7 @@ def dashboard_view(request):
             for _, row in season_stats.iterrows()
         ]
 
-    # Serialize Chart Data
-    chart_data_json = json.dumps(chart_data, cls=DjangoJSONEncoder)
-    seasonality_chart_json = json.dumps(seasonal_data, cls=DjangoJSONEncoder) # Assuming seasonal_data is the source for seasonality_chart_json
-    heatmap_json_serialized = json.dumps(heatmap_json, cls=DjangoJSONEncoder) # Renamed to avoid conflict with dict
-    objective_chart_json_serialized = json.dumps(objective_chart, cls=DjangoJSONEncoder) # Renamed to avoid conflict with dict
+    # [FIX] Removed manual json.dumps to let json_script handle serialization (fixes double-serialization)
 
     # Traffic Alert Logic (Example - you might need to define thresholds)
     # Traffic Alert Logic (Traffic Gap Analysis)
@@ -913,24 +953,15 @@ def dashboard_view(request):
 
 
 
+
+    # [FIX] Day-Parting Analysis (Ensuring consistency with earlier calculation)
+    # Using day_chart_data from line 213 which already has 'days', 'roas', and 'colors'
+    day_part_dict = day_chart_data if 'day_chart_data' in locals() and day_chart_data.get('days') else {'days': [], 'roas': [], 'colors': []}
+
+    
+    # [FIX] Final Context Preparation (Using consolidated block below)
     context = {
-        'chart_data_json': chart_data_json,
-        'seasonality_chart_json': seasonality_chart_json,
-        'heatmap_json': heatmap_json_serialized,
-        'objective_chart_json': objective_chart_json_serialized,
-        
-        'traffic_alert': traffic_alert, # [NEW] Pass alert to template
-        'dashboard_stats': deep_dive_metrics, # Renamed from deep_dive_metrics
-        'monthly_trend': monthly_trend_data, # Renamed from monthly_trend_json
-        # Modul 3 Context
-        'funnel_abs': funnel_abs,
-        'funnel_rates': funnel_rates,
-        'date_range': date_range_str,
-        'clients_data': clients_data,
-        'allocation_data': {
-            'actual': actual_allocation,
-            'recommended': recommended_allocation
-        },
+        # Core Metrics
         'summary_stats': {
             'total_revenue': df['revenue'].sum(),
             'total_spend': df['total_spend'].sum(),
@@ -939,6 +970,30 @@ def dashboard_view(request):
             'avg_daily_spend': df['total_spend'].mean(),
             'avg_daily_revenue': df['revenue'].mean(),
         },
+        'deep_dive_metrics': deep_dive_metrics,
+        'dashboard_stats': deep_dive_metrics, # Backward compatibility
+        'mom_growth': mom_growth,
+        'date_range': date_range_str,
+
+        # Chart Data (Plain objects, handled by json_script)
+        'chart_data_json': chart_data,
+        'funnel_data_json': funnel_abs,
+        'funnel_abs': funnel_abs,
+        'funnel_rates': funnel_rates,
+        'heatmap_json': heatmap_json,
+        'objective_chart_json': objective_chart,
+        'monthly_trend_json': monthly_trend_data,
+        'monthly_trend': monthly_trend_data,
+        'industry_chart_data': industry_chart_data,
+        'industry_monthly_json': industry_monthly_json,
+        'monthly_seasonality': seasonal_data,
+        'day_part_json': day_part_dict,
+        
+        # Allocation & Optimization
+        'allocation_data': {
+            'actual': actual_allocation,
+            'recommended': recommended_allocation
+        },
         'optimization': optimized_allocation,
         'optimization_metrics': {
             'current_revenue': current_projected_revenue,
@@ -946,39 +1001,40 @@ def dashboard_view(request):
             'uplift_percentage': uplift_percentage,
             'uplift_absolute': uplift_absolute
         },
+
+        # Alerts & Anomalies
+        'traffic_alert': traffic_alert,
         'anomalies_count': anomalies_fixed,
         'anomaly_report': anomaly_report,
-        # NEW CONTEXT VARIABLES
-        'ctr_metrics': {
-            'overall': overall_ctr,
-            'by_objective': ctr_data
-        },
-        'ctr_comparison': ctr_data,
-        'roas_by_objective': roas_by_objective,
-        'peak_performance': {
-            'month': best_month_name,
-            'value': best_month_value
-        },
-        # NEW FEATURES CONTEXT
-        'day_part_json': day_chart_data,
+
+        # Phasing & Tactical Plans
         'phasing_strategy': phasing_strategy,
         'client_insights': top_client_insights,
         'master_plan': master_plan,
         'tactical_plan': tactical_plan,
         'tactical_client': tactical_client_name,
-        'tactical_month': f"{calendar.month_name[target_month]} 2024 (Forecast based on 2023 Data)",
+        'tactical_month': f"{calendar.month_name[target_month]} 2024",
         'tactical_month_num': target_month,
         'all_clients_list': all_clients_list,
         'month_names': [(i, calendar.month_name[i]) for i in range(1, 13)],
-        'mom_growth': mom_growth, # [NEW]
-        'monthly_seasonality': seasonal_data, # [NEW]
-        # LEADERBOARD ANALYSIS (Guidebook Section C)
+
+        # Efficiency & Leaderboards
+        'ctr_metrics': {'overall': overall_ctr, 'by_objective': ctr_data},
+        'ctr_comparison': ctr_data,
+        'roas_by_objective': roas_by_objective,
+        'peak_performance': {'month': best_month_name, 'value': best_month_value},
         'top_industry_avg': top_industry_avg,
         'top_account_rev': top_account_rev,
         'top_industry_roas': top_industry_roas,
         'all_accounts_rev': all_accounts_rev,
         'top_5_industries_avg': top_5_industries_avg,
         'top_5_industries_roas': top_5_industries_roas,
+        
+        # [NEW] Efficiency Status
+        'saturation_corr': saturation_corr if 'saturation_corr' in locals() else 0,
+        'efficiency_status': efficiency_status if 'efficiency_status' in locals() else "N/A",
+        'efficiency_color': efficiency_color if 'efficiency_color' in locals() else "text-gray-400",
+        'efficiency_recommendation': efficiency_recommendation if 'efficiency_recommendation' in locals() else "Data Unavailable",
     }
     
     return render(request, 'ads_analyzer/dashboard.html', context)
