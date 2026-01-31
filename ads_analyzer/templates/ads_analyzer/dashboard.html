@@ -557,7 +557,7 @@
                     <select id="clientSelector"
                         class="bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-green-500 focus:outline-none min-w-[180px]">
                         {% for client in all_clients_list %}
-                        <option value="{{ client }}" {% if client==tactical_client %}selected{% endif %}>{{ client }}
+                        <option value="{{ client }}" {% if client == tactical_client %}selected{% endif %}>{{ client }}
                         </option>
                         {% endfor %}
                     </select>
@@ -568,7 +568,7 @@
                     <select id="monthSelector"
                         class="bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-green-500 focus:outline-none min-w-[140px]">
                         {% for num, name in month_names %}
-                        <option value="{{ num }}" {% if num==tactical_month_num %}selected{% endif %}>{{ name }}
+                        <option value="{{ num }}" {% if num == tactical_month_num %}selected{% endif %}>{{ name }}
                         </option>
                         {% endfor %}
                     </select>
