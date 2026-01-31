@@ -44,8 +44,14 @@
             <h1 class="text-3xl font-bold text-white">AdPerformance Executive Overview</h1>
             <p class="text-gray-400">{{ date_range }} Performance Data (Indonesia Market)</p>
         </div>
-        <div class="bg-gray-800 px-4 py-2 rounded text-sm text-gray-300">
-            Status: <span class="text-green-400 font-bold">Online</span> | Data Validated
+        <div class="flex items-center gap-4">
+            <a href="{% url 'strategic_report' %}"
+                class="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-500 hover:to-blue-500 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-lg">
+                📊 Strategic Report
+            </a>
+            <div class="bg-gray-800 px-4 py-2 rounded text-sm text-gray-300">
+                Status: <span class="text-green-400 font-bold">Online</span> | Data Validated
+            </div>
         </div>
     </div>
 
@@ -557,7 +563,7 @@
                     <select id="clientSelector"
                         class="bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-green-500 focus:outline-none min-w-[180px]">
                         {% for client in all_clients_list %}
-                        <option value="{{ client }}" {% if client == tactical_client %}selected{% endif %}>{{ client }}
+                        <option value="{{ client }}" {% if client==tactical_client %}selected{% endif %}>{{ client }}
                         </option>
                         {% endfor %}
                     </select>
@@ -568,7 +574,7 @@
                     <select id="monthSelector"
                         class="bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-green-500 focus:outline-none min-w-[140px]">
                         {% for num, name in month_names %}
-                        <option value="{{ num }}" {% if num == tactical_month_num %}selected{% endif %}>{{ name }}
+                        <option value="{{ num }}" {% if num==tactical_month_num %}selected{% endif %}>{{ name }}
                         </option>
                         {% endfor %}
                     </select>

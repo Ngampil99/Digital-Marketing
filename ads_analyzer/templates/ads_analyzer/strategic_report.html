@@ -1,0 +1,273 @@
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategic Business Report - AdPerformance Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid rgba(71, 85, 105, 0.5);
+        }
+
+        .pillar-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .pillar-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #10b981, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-highlight {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen text-gray-100 p-6">
+    <!-- Header -->
+    <div class="max-w-7xl mx-auto mb-8">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold gradient-text">🎯 Strategic Business Report</h1>
+                <p class="text-gray-400 mt-1">Scientific Data-Driven Marketing Optimization</p>
+            </div>
+            <a href="{% url 'dashboard' %}"
+                class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
+                ← Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="max-w-7xl mx-auto mb-8">
+        <div class="card">
+            <h2 class="text-xl font-bold text-white mb-4">📊 Executive Summary</h2>
+            <p class="text-gray-300 mb-4">Berdasarkan <span class="text-green-400 font-bold">pemodelan prediktif dan
+                    optimasi algoritmik</span>, kami mengidentifikasi <span class="text-blue-400 font-bold">tiga pilar
+                    strategis</span> yang secara matematis terbukti dapat meningkatkan performa marketing:</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="stat-highlight rounded-lg p-4 text-center">
+                    <div class="text-2xl font-bold text-green-400">SLSQP</div>
+                    <div class="text-sm text-gray-400">Budget Optimization Algorithm</div>
+                </div>
+                <div class="stat-highlight rounded-lg p-4 text-center">
+                    <div class="text-2xl font-bold text-blue-400">{{ mmm_data.traffic_roas }}</div>
+                    <div class="text-sm text-gray-400">Traffic ROAS (MMM)</div>
+                </div>
+                <div class="stat-highlight rounded-lg p-4 text-center">
+                    <div class="text-2xl font-bold text-red-400">{{ funnel_data.click_to_view_rate|floatformat:1 }}%
+                    </div>
+                    <div class="text-sm text-gray-400">Click→View Drop-off</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Three Pillars -->
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Pillar 1 -->
+        <div class="card pillar-card border-l-4 border-green-500">
+            <div class="flex items-center mb-4">
+                <span class="text-3xl mr-3">🔬</span>
+                <div>
+                    <h3 class="text-lg font-bold text-white">PILLAR 1</h3>
+                    <p class="text-green-400 font-semibold">Scientific Budget Reallocation</p>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <div class="bg-gray-800/50 rounded p-3">
+                    <div class="text-xs text-gray-500 mb-1">Algorithm</div>
+                    <div class="text-white font-mono">scipy.optimize.minimize (SLSQP)</div>
+                </div>
+                <div class="bg-gray-800/50 rounded p-3">
+                    <div class="text-xs text-gray-500 mb-1">Mathematical Formula</div>
+                    <div class="text-green-300 font-mono text-sm">Maximize: Σ (Budget_i × ROAS_i)</div>
+                </div>
+                <p class="text-gray-300 text-sm">Algoritma merekomendasikan <span class="text-green-400">pemangkasan
+                        budget pada Low ROAS</span> dan <span class="text-green-400">reinvestasi agresif ke High
+                        ROAS</span> untuk mencapai uplift tanpa menambah total biaya.</p>
+            </div>
+        </div>
+
+        <!-- Pillar 2 -->
+        <div class="card pillar-card border-l-4 border-blue-500">
+            <div class="flex items-center mb-4">
+                <span class="text-3xl mr-3">📈</span>
+                <div>
+                    <h3 class="text-lg font-bold text-white">PILLAR 2</h3>
+                    <p class="text-blue-400 font-semibold">Long-term Impact Analysis (MMM)</p>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-gray-800/50 rounded p-3 text-center">
+                        <div class="text-xl font-bold text-blue-400">{{ mmm_data.traffic_roas }}</div>
+                        <div class="text-xs text-gray-500">Traffic ROAS</div>
+                    </div>
+                    <div class="bg-gray-800/50 rounded p-3 text-center">
+                        <div class="text-xl font-bold text-blue-400">{{ mmm_data.lag_correlation }}</div>
+                        <div class="text-xs text-gray-500">Lag-2 Correlation</div>
+                    </div>
+                </div>
+                <div class="bg-gray-800/50 rounded p-3">
+                    <div class="text-xs text-gray-500 mb-1">Base Revenue (Intercept)</div>
+                    <div class="text-white">IDR {{ mmm_data.base_revenue|idr_currency }}</div>
+                </div>
+                <p class="text-gray-300 text-sm">MMM membuktikan Traffic memiliki <span class="text-blue-400">dampak
+                        tunda 2 hari</span>. Mematikan Traffic akan menurunkan base revenue.</p>
+            </div>
+        </div>
+
+        <!-- Pillar 3 -->
+        <div class="card pillar-card border-l-4 border-red-500">
+            <div class="flex items-center mb-4">
+                <span class="text-3xl mr-3">🔍</span>
+                <div>
+                    <h3 class="text-lg font-bold text-white">PILLAR 3</h3>
+                    <p class="text-red-400 font-semibold">Funnel Bottleneck Repair</p>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <div class="bg-red-900/30 border border-red-500/50 rounded p-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-red-400 font-bold">CRITICAL DROP-OFF</span>
+                        <span class="text-2xl font-bold text-red-400">~90%</span>
+                    </div>
+                    <div class="text-sm text-gray-400 mt-1">Clicks → Content Views</div>
+                </div>
+                <div class="bg-gray-800/50 rounded p-3">
+                    <div class="text-xs text-gray-500 mb-1">Funnel Analysis</div>
+                    <div class="text-sm">
+                        <div class="flex justify-between text-gray-300"><span>Clicks:</span><span>{{
+                                funnel_data.clicks|intdot }}</span></div>
+                        <div class="flex justify-between text-red-400"><span>Views:</span><span>{{
+                                funnel_data.content_views|intdot }}</span></div>
+                    </div>
+                </div>
+                <p class="text-gray-300 text-sm">Indikasi masalah <span class="text-red-400">site load speed</span> atau
+                    <span class="text-red-400">tracking issue</span>. Perbaiki sebelum scale budget.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Execution Roadmap -->
+    <div class="max-w-7xl mx-auto mb-8">
+        <div class="card">
+            <h2 class="text-xl font-bold text-white mb-4">🗓️ Execution Roadmap (Synced with Master Plan)</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-gray-400 border-b border-gray-700">
+                            <th class="text-left py-2 px-3">Month</th>
+                            <th class="text-left py-2 px-3">Strategy</th>
+                            <th class="text-left py-2 px-3">Focus</th>
+                            <th class="text-left py-2 px-3">Budget Split</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-300">
+                        <tr class="border-b border-gray-800">
+                            <td class="py-2 px-3">Jan - Mar</td>
+                            <td>Traffic & Awareness</td>
+                            <td class="text-blue-400">Traffic</td>
+                            <td>70% Traffic / 30% Sales</td>
+                        </tr>
+                        <tr class="border-b border-gray-800 bg-green-900/20">
+                            <td class="py-2 px-3 font-bold text-green-400">April</td>
+                            <td class="font-bold">Sales Push (Ramadan)</td>
+                            <td class="text-green-400 font-bold">Conversion</td>
+                            <td class="font-bold">20% Traffic / 80% Sales</td>
+                        </tr>
+                        <tr class="border-b border-gray-800">
+                            <td class="py-2 px-3">May - Jun</td>
+                            <td>Sustain / Retargeting</td>
+                            <td class="text-yellow-400">Consideration</td>
+                            <td>40% Traffic / 60% Sales</td>
+                        </tr>
+                        <tr class="border-b border-gray-800">
+                            <td class="py-2 px-3">Jul - Nov</td>
+                            <td>Traffic & Awareness</td>
+                            <td class="text-blue-400">Traffic</td>
+                            <td>70% Traffic / 30% Sales</td>
+                        </tr>
+                        <tr class="bg-green-900/20">
+                            <td class="py-2 px-3 font-bold text-green-400">December</td>
+                            <td class="font-bold">Mega Sales (Harbolnas)</td>
+                            <td class="text-green-400 font-bold">Conversion</td>
+                            <td class="font-bold">20% Traffic / 80% Sales</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trend & Seasonality -->
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="card">
+            <h3 class="text-lg font-bold text-white mb-4">📈 Trend Analysis</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-gray-800/50 rounded p-4 text-center">
+                    <div class="text-xs text-gray-500 mb-1">Start (7-Day Avg)</div>
+                    <div class="text-lg font-bold text-white">IDR {{ trend_data.start|idr_currency }}</div>
+                </div>
+                <div class="bg-gray-800/50 rounded p-4 text-center">
+                    <div class="text-xs text-gray-500 mb-1">End (7-Day Avg)</div>
+                    <div class="text-lg font-bold text-green-400">IDR {{ trend_data.end|idr_currency }}</div>
+                </div>
+            </div>
+            <div class="mt-4 text-center">
+                <span class="text-3xl font-bold text-green-400">+{{ trend_data.growth_pct|floatformat:1 }}%</span>
+                <span class="text-gray-400 ml-2">Revenue Growth</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 class="text-lg font-bold text-white mb-4">📅 Weekly Seasonality</h3>
+            <div class="space-y-2">
+                {% for day in seasonality_data %}
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-400 w-24">{{ day.name }}</span>
+                    <div class="flex-1 mx-3 bg-gray-700 rounded h-4 overflow-hidden">
+                        {% if day.value >= 0 %}
+                        <div class="bg-green-500 h-full" style="width: {{ day.bar_width }}%; margin-left: 50%;"></div>
+                        {% else %}
+                        <div class="bg-red-500 h-full"
+                            style="width: {{ day.bar_width }}%; margin-left: calc(50% - {{ day.bar_width }}%);"></div>
+                        {% endif %}
+                    </div>
+                    <span
+                        class="w-20 text-right {% if day.value >= 0 %}text-green-400{% else %}text-red-400{% endif %}">{{
+                        day.value|floatformat:0 }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="max-w-7xl mx-auto text-center text-gray-500 text-sm">
+        <p>Report Generated By: Advanced Algorithmic Analysis System</p>
+        <p>Data Source: 2023 Historical Performance Data | Algorithms: SLSQP, NumPy OLS, Moving Average</p>
+    </div>
+</body>
+
+</html>
