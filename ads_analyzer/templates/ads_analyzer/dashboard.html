@@ -54,6 +54,9 @@
         <div class="card">
             <div class="stat-label">Total Revenue (GMV)</div>
             <div class="stat-value">IDR {{ summary_stats.total_revenue|idr_currency }}</div>
+            <div class="text-xs mt-1 {% if mom_growth >= 0 %}text-green-400{% else %}text-red-400{% endif %}">
+                {% if mom_growth >= 0 %}▲{% else %}▼{% endif %} {{ mom_growth|floatformat:1 }}% vs Last Month
+            </div>
         </div>
         <div class="card">
             <div class="stat-label">Total Spend</div>
@@ -73,6 +76,151 @@
         </div>
     </div>
 
+    </div>
+
+    <!-- NEW SECTION: Leaderboard Analysis (Guidebook Section C) -->
+    <div class="card mb-8 bg-gradient-to-r from-yellow-900/20 to-amber-900/20 border border-yellow-500/30">
+        <h2 class="text-xl font-bold mb-6 text-yellow-400">🏆 Market Leaders & Efficiency Champions</h2>
+
+        <!-- Winner Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- Card 1: Highest Avg Turnover (Top Industry by Avg Revenue) -->
+            <div class="bg-gray-800/80 rounded-lg p-5 border-l-4 border-yellow-500 relative overflow-hidden">
+                <div
+                    class="absolute top-2 right-2 bg-yellow-500/20 text-yellow-400 text-xs px-2 py-1 rounded font-bold">
+                    C.1
+                </div>
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="bg-yellow-500/20 p-2 rounded-full">
+                        <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase tracking-wide">Highest Avg Turnover</div>
+                        <div class="text-sm text-gray-500">Top Industry by Avg Omzet</div>
+                    </div>
+                </div>
+                {% if top_industry_avg %}
+                <div class="text-2xl font-bold text-white mb-1">{{ top_industry_avg.industry }}</div>
+                <div class="text-lg text-yellow-400 font-bold">IDR {{ top_industry_avg.avg_revenue|idr_currency }}</div>
+                <div class="text-xs text-gray-500">Per Transaction Average</div>
+                {% else %}
+                <div class="text-gray-500 italic">No data available</div>
+                {% endif %}
+            </div>
+
+            <!-- Card 2: Best Revenue Generator (Top Account by Total Revenue) -->
+            <div class="bg-gray-800/80 rounded-lg p-5 border-l-4 border-green-500 relative overflow-hidden">
+                <div class="absolute top-2 right-2 bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded font-bold">
+                    C.2
+                </div>
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="bg-green-500/20 p-2 rounded-full">
+                        <svg class="w-6 h-6 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase tracking-wide">Best Revenue Generator</div>
+                        <div class="text-sm text-gray-500">Top Client Account</div>
+                    </div>
+                </div>
+                {% if top_account_rev %}
+                <div class="text-2xl font-bold text-white mb-1">{{ top_account_rev.account_name }}</div>
+                <div class="text-lg text-green-400 font-bold">IDR {{ top_account_rev.total_revenue|idr_currency }}</div>
+                <div class="text-xs text-gray-500">Total Revenue Generated</div>
+                {% else %}
+                <div class="text-gray-500 italic">No data available</div>
+                {% endif %}
+            </div>
+
+            <!-- Card 3: Most Efficient Industry (Top Industry by ROAS) -->
+            <div class="bg-gray-800/80 rounded-lg p-5 border-l-4 border-purple-500 relative overflow-hidden">
+                <div
+                    class="absolute top-2 right-2 bg-purple-500/20 text-purple-400 text-xs px-2 py-1 rounded font-bold">
+                    C.3
+                </div>
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="bg-purple-500/20 p-2 rounded-full">
+                        <svg class="w-6 h-6 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase tracking-wide">Most Efficient Industry</div>
+                        <div class="text-sm text-gray-500">Highest ROAS</div>
+                    </div>
+                </div>
+                {% if top_industry_roas %}
+                <div class="text-2xl font-bold text-white mb-1">{{ top_industry_roas.industry }}</div>
+                <div class="text-lg text-purple-400 font-bold">{{ top_industry_roas.roas|floatformat:2 }}x ROAS</div>
+                <div class="text-xs text-gray-500">Revenue / Spend Ratio</div>
+                {% else %}
+                <div class="text-gray-500 italic">No data available</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Top 5 Accounts Table -->
+        <div class="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+            <h3 class="text-lg font-bold text-white mb-4">📊 All Accounts by Total Revenue</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-400">
+                    <thead class="text-xs text-gray-400 uppercase bg-gray-700/50">
+                        <tr>
+                            <th class="px-4 py-3">Rank</th>
+                            <th class="px-4 py-3">Account Name</th>
+                            <th class="px-4 py-3 text-right">Total Spend</th>
+                            <th class="px-4 py-3 text-right">Total Revenue</th>
+                            <th class="px-4 py-3 text-right">Purchases</th>
+                            <th class="px-4 py-3 text-right">ROAS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for account in all_accounts_rev %}
+                        <tr class="border-b border-gray-700 hover:bg-gray-700/20
+                            {% if forloop.first %}bg-gradient-to-r from-yellow-900/20 to-transparent{% endif %}">
+                            <td class="px-4 py-3">
+                                {% if forloop.first %}
+                                <span class="text-yellow-400 font-bold text-lg">🥇</span>
+                                {% elif forloop.counter == 2 %}
+                                <span class="text-gray-300 font-bold">🥈</span>
+                                {% elif forloop.counter == 3 %}
+                                <span class="text-orange-400 font-bold">🥉</span>
+                                {% else %}
+                                <span class="text-gray-500">{{ forloop.counter }}</span>
+                                {% endif %}
+                            </td>
+                            <td
+                                class="px-4 py-3 font-medium {% if forloop.first %}text-yellow-400{% else %}text-white{% endif %}">
+                                {{ account.account_name }}
+                            </td>
+                            <td class="px-4 py-3 text-right">IDR {{ account.total_spend|idr_currency }}</td>
+                            <td class="px-4 py-3 text-right text-green-400 font-bold">IDR {{ account.total_revenue|idr_currency }}</td>
+                            <td class="px-4 py-3 text-right">{{ account.total_purchases|intdot }}</td>
+                            <td class="px-4 py-3 text-right font-bold 
+                                {% if account.roas > 2 %}text-green-400
+                                {% elif account.roas < 1 %}text-red-400
+                                {% else %}text-yellow-400{% endif %}">
+                                {{ account.roas|floatformat:2 }}x
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-4 py-6 text-center text-gray-500 italic">No account data available
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- NEW SECTION: CTR Performance by Objective (Requested) -->
@@ -217,6 +365,12 @@
         </div>
     </div>
 
+    <!-- NEW SECTION: Seasonal Decomposition (Requested) -->
+    <div class="card mb-8">
+        <h2 class="text-xl font-bold mb-4 text-white">Seasonal Decomposition (Average Revenue per Month)</h2>
+        <div id="seasonal-chart" style="width:100%;height:350px;"></div>
+    </div>
+
     <!-- Section: Monthly Global Trends (Modul 2) -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <!-- Monthly Financials (Spend vs Revenue vs Calculate Monthly ROAS) -->
@@ -322,18 +476,15 @@
         <div class="grid grid-cols-3 gap-4 text-center">
             <div>
                 <div class="text-sm text-gray-400 mb-1">Current Projected Revenue</div>
-                <div class="text-2xl font-bold text-white">IDR {{ optimization_metrics.current_revenue|idr_currency }}
-                </div>
+                <div class="text-2xl font-bold text-white">IDR {{ optimization_metrics.current_revenue|idr_currency }}</div>
             </div>
             <div class="border-l border-r border-gray-700">
                 <div class="text-sm text-gray-400 mb-1">Optimized Revenue (AI Forecast)</div>
-                <div class="text-2xl font-bold text-green-400">IDR {{
-                    optimization_metrics.optimized_revenue|idr_currency }}</div>
+                <div class="text-2xl font-bold text-green-400">IDR {{ optimization_metrics.optimized_revenue|idr_currency }}</div>
             </div>
             <div>
                 <div class="text-sm text-gray-400 mb-1">Potential Uplift</div>
-                <div class="text-3xl font-bold text-green-400">+{{ optimization_metrics.uplift_percentage|floatformat:1
-                    }}%</div>
+                <div class="text-3xl font-bold text-green-400">+{{ optimization_metrics.uplift_percentage|floatformat:1 }}%</div>
                 <div class="text-xs text-gray-500">IDR {{ optimization_metrics.uplift_absolute|idr_currency }}</div>
             </div>
         </div>
@@ -601,6 +752,9 @@
     {{ monthly_trend_json|json_script:"monthly-trend-data" }}
     {{ funnel_abs|json_script:"funnel-abs-data" }}
     {{ heatmap_json|json_script:"heatmap-data" }}
+    {{ monthly_seasonality|json_script:"seasonality-data" }}
+    {{ day_part_json|json_script:"day-part-data" }}
+    {{ industry_chart_data|json_script:"industry-chart-data" }}
 
     <script>
         // ... (Existing chart logic) ...
@@ -739,6 +893,19 @@
             hovertemplate: 'ROAS: %{y:.2f}x<extra></extra>'
         };
 
+        // [AUDIT FIX 1 & 3] Smoothing & Forecasting Traces
+        const traceMA7 = {
+            x: chartData.dates, y: chartData.revenue_ma_7, type: 'scatter', mode: 'lines', name: '7-Day Trend (Smoothed)',
+            line: { color: '#facc15', width: 3 }, // Yellow
+            hovertemplate: '7-Day MA: IDR %{y:,.0f}<extra></extra>'
+        };
+
+        const traceForecast = {
+            x: chartData.forecast_dates, y: chartData.forecast_values, type: 'scatter', mode: 'lines', name: '30-Day Forecast',
+            line: { color: '#ef4444', width: 2, dash: 'dash' }, // Red Dashed
+            hovertemplate: 'Forecast: IDR %{y:,.0f}<extra></extra>'
+        };
+
         const layoutTrend = {
             paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#9ca3af' },
             xaxis: { gridcolor: '#374151', title: 'Date' },
@@ -765,12 +932,30 @@
                 { x: '2023-11-11', y: Math.max(...chartData.revenue) * 0.9, xref: 'x', yref: 'y', text: '11.11 Sales', showarrow: true, arrowhead: 1, ax: 0, ay: -40 }
             ]
         };
-        Plotly.newPlot('main-chart', [traceSpend, traceRevenue, traceROAS], layoutTrend, { responsive: true });
+        // Updated Plot with MA7 and Forecast
+        Plotly.newPlot('main-chart', [traceSpend, traceRevenue, traceMA7, traceForecast, traceROAS], layoutTrend, { responsive: true });
+
+        // [AUDIT FIX 2] Seasonal Chart (Bar)
+        const seasonData = JSON.parse(document.getElementById('seasonality-data').textContent);
+        const traceSeason = {
+            x: seasonData.map(d => d.month),
+            y: seasonData.map(d => d.avg_revenue),
+            type: 'bar',
+            marker: { color: '#8b5cf6' },
+            name: 'Avg Revenue'
+        };
+
+        Plotly.newPlot('seasonal-chart', [traceSeason], {
+            paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#9ca3af' },
+            yaxis: { title: 'Avg Revenue', gridcolor: '#374151', tickformat: ',.0f' },
+            yaxis2: { overlaying: 'y', side: 'right' },
+            margin: { t: 20, l: 60, r: 20, b: 40 }
+        }, { responsive: true });
 
 
 
         // NEW: Modul 2 Industry Performance Chart (Revenue vs ROAS)
-        const indData = JSON.parse('{{ industry_chart_json| escapejs}}');
+        const indData = JSON.parse(document.getElementById('industry-chart-data').textContent);
 
         var traceInd1 = {
             x: indData.labels,
@@ -811,7 +996,7 @@
 
 
         // NEW: Day-Parting Chart
-        const dayData = JSON.parse('{{ day_part_json| escapejs}}');
+        const dayData = JSON.parse(document.getElementById('day-part-data').textContent);
 
         Plotly.newPlot('day-chart', [{
             x: dayData.days,
@@ -865,8 +1050,7 @@
                             </h3>
                             <div class="mt-2">
                                 <p class="text-sm text-gray-400 mb-4">
-                                    The system automatically detected and corrected <strong>{{ anomaly_report.total
-                                        }}</strong> quality issues during ingestion.
+                                    The system automatically detected and corrected <strong>{{ anomaly_report.total }}</strong> quality issues during ingestion.
                                     The following rules were applied to ensure analytical accuracy.
                                 </p>
 

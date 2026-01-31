@@ -32,6 +32,10 @@ def dashboard_view(request):
     
     # Convert to DataFrame for easier list processing
     df = pd.DataFrame(list(daily_data))
+
+    # [FIX] Ensure date column is proper datetime objects for calculations
+    if not df.empty and 'created_date' in df.columns:
+        df['created_date'] = pd.to_datetime(df['created_date'])
     
     # Ensure numeric types are float for JSON serialization logic
     numeric_cols = ['traffic_spend', 'sales_spend', 'revenue', 'impressions']
@@ -42,12 +46,59 @@ def dashboard_view(request):
     # Calculate ROAS for chart (handle division by zero)
     df['total_spend'] = df['traffic_spend'] + df['sales_spend']
     df['roas'] = df.apply(lambda x: x['revenue'] / x['total_spend'] if x['total_spend'] > 0 else 0, axis=1)
+
+    # --- [AUDIT FIX 1] Smoothing (7-Day Rolling Average) ---
+    df['revenue_ma_7'] = df['revenue'].rolling(window=7).mean().fillna(0) # Forward fill would be better but fillna(0) requested
+
+    # --- [AUDIT FIX 3] Forecasting (Simple Linear Projection - "Prophet Light") ---
+    import numpy as np
     
+    # Create Future Dates (Next 30 Days)
+    last_date = df['created_date'].max()
+    future_dates = [last_date + timedelta(days=x) for x in range(1, 31)]
+    
+    # Fit Linear Trend on last 60 days (or all data) to capture recent trajectory
+    # Using MA data for smoother trend fitting
+    trend_window = 60 if len(df) > 60 else len(df)
+    df_trend = df.tail(trend_window).copy()
+    
+    # X = Days from start of window
+    df_trend['day_idx'] = (df_trend['created_date'] - df_trend['created_date'].min()).dt.days
+    
+    if len(df_trend) > 1:
+        # Fit Polynomial (Degree 1 = Linear)
+        coeffs = np.polyfit(df_trend['day_idx'], df_trend['revenue_ma_7'], 1)
+        poly = np.poly1d(coeffs)
+        
+        # Predict for Future
+        last_day_idx = df_trend['day_idx'].max()
+        future_indices = np.arange(last_day_idx + 1, last_day_idx + 31)
+        predicted_revenue = poly(future_indices)
+        predicted_revenue = np.maximum(predicted_revenue, 0) # No negative revenue
+    else:
+        predicted_revenue = [0] * 30
+    
+    forecast_data = {
+        'dates': [d.strftime('%Y-%m-%d') for d in future_dates],
+        'values': predicted_revenue.tolist()
+    }
+
+    # --- [AUDIT FIX 4] Growth Analysis (MoM) ---
+    # Compare Last Complete Month vs Previous
+    # Simplified: Compare last 30 days Revenue vs Previous 30 days
+    last_30_days_rev = df[df['created_date'] > (last_date - timedelta(days=30))]['revenue'].sum()
+    prev_30_days_rev = df[(df['created_date'] <= (last_date - timedelta(days=30))) & (df['created_date'] > (last_date - timedelta(days=60)))]['revenue'].sum()
+    
+    mom_growth = ((last_30_days_rev - prev_30_days_rev) / prev_30_days_rev * 100) if prev_30_days_rev > 0 else 0
+
     # 2. Prepare JSON for Plotly
     chart_data = {
         'dates': df['created_date'].astype(str).tolist(),
         'roas': df['roas'].tolist(),
         'revenue': df['revenue'].tolist(),
+        'revenue_ma_7': df['revenue_ma_7'].tolist(), # [NEW]
+        'forecast_dates': forecast_data['dates'],      # [NEW]
+        'forecast_values': forecast_data['values'],    # [NEW]
         'traffic_spend': df['traffic_spend'].tolist(),
         'sales_spend': df['sales_spend'].tolist(),
     }
@@ -128,11 +179,11 @@ def dashboard_view(request):
         
         best_day_name = day_analysis.idxmax()
         
-        # Prepare for Plotly
+        # Prepare for Plotly - Convert Categorical to strings for JSON serialization
         day_chart_data = {
-            'days': day_analysis.index.tolist(),
+            'days': [str(d) for d in day_analysis.index],
             'roas': day_analysis.values.tolist(),
-            'colors': ['#4ade80' if day == best_day_name else '#60a5fa' for day in day_analysis.index]
+            'colors': ['#4ade80' if str(day) == str(best_day_name) else '#60a5fa' for day in day_analysis.index]
         }
     else:
         day_chart_data = {'days': [], 'roas': [], 'colors': []}
@@ -640,10 +691,91 @@ def dashboard_view(request):
         objective_chart['spend'].append(s)
         objective_chart['revenue'].append(r)
 
+    # --- [GUIDEBOOK SECTION C] LEADERBOARD ANALYSIS ---
+    # C.1: Top Industry by Average Revenue (Avg Omzet per Industry)
+    from django.db.models import Avg
+    industry_avg_revenue = clean_data_qs.values('industry').annotate(
+        avg_revenue=Avg('purchase_value')
+    ).exclude(industry__isnull=True).exclude(industry='').order_by('-avg_revenue')
+    
+    top_industry_avg = None
+    top_5_industries_avg = []
+    for idx, item in enumerate(industry_avg_revenue[:5]):
+        ind_data = {
+            'industry': item['industry'],
+            'avg_revenue': float(item['avg_revenue'] or 0)
+        }
+        top_5_industries_avg.append(ind_data)
+        if idx == 0:
+            top_industry_avg = ind_data
+    
+    # C.2: Top Account by Total Revenue (Best Revenue Generator)
+    account_total_revenue = clean_data_qs.values('account_name').annotate(
+        total_revenue=Sum('purchase_value'),
+        total_spend=Sum('amount_spent'),
+        total_purchases=Sum('purchases')
+    ).order_by('-total_revenue')
+    
+    top_account_rev = None
+    all_accounts_rev = []
+    for idx, item in enumerate(account_total_revenue):
+        spend = float(item['total_spend'] or 0)
+        revenue = float(item['total_revenue'] or 0)
+        roas = revenue / spend if spend > 0 else 0
+        acc_data = {
+            'account_name': item['account_name'],
+            'total_revenue': revenue,
+            'total_spend': spend,
+            'total_purchases': item['total_purchases'] or 0,
+            'roas': roas
+        }
+        all_accounts_rev.append(acc_data)
+        if idx == 0:
+            top_account_rev = acc_data
+    
+    # C.3: Top Industry by ROAS (Most Efficient Industry)
+    industry_roas_data = clean_data_qs.values('industry').annotate(
+        total_revenue=Sum('purchase_value'),
+        total_spend=Sum('amount_spent')
+    ).exclude(industry__isnull=True).exclude(industry='')
+    
+    # Calculate ROAS and sort
+    industry_roas_list = []
+    for item in industry_roas_data:
+        spend = float(item['total_spend'] or 0)
+        revenue = float(item['total_revenue'] or 0)
+        roas = revenue / spend if spend > 0 else 0
+        industry_roas_list.append({
+            'industry': item['industry'],
+            'total_revenue': revenue,
+            'total_spend': spend,
+            'roas': roas
+        })
+    
+    # Sort by ROAS descending
+    industry_roas_list.sort(key=lambda x: x['roas'], reverse=True)
+    top_industry_roas = industry_roas_list[0] if industry_roas_list else None
+    top_5_industries_roas = industry_roas_list[:5]
+
+    # --- [AUDIT FIX 2] Monthly Seasonality for Chart ---
+    seasonal_data = []
+    if not df.empty:
+        # Group by Month Name (with correct sort)
+        df['month_idx'] = df['created_date'].dt.month
+        df['month_name_short'] = df['created_date'].dt.strftime('%b')
+        season_stats = df.groupby(['month_idx', 'month_name_short'])['revenue'].mean().reset_index()
+        season_stats.sort_values('month_idx', inplace=True)
+        
+        seasonal_data = [
+            {'month': row['month_name_short'], 'avg_revenue': row['revenue']} 
+            for _, row in season_stats.iterrows()
+        ]
+
     context = {
         'chart_data_json': chart_data,
         'funnel_data_json': funnel_metrics,
-        'industry_chart_json': json.dumps(industry_chart_data, cls=DjangoJSONEncoder), # NEW: Specific Bar+Line chart
+        'industry_chart_json': json.dumps(industry_chart_data, cls=DjangoJSONEncoder), # Legacy for other uses
+        'industry_chart_data': industry_chart_data, # NEW: For json_script tag
         'industry_monthly_json': industry_monthly_json,
         'objective_chart_json': objective_chart,
         'deep_dive_metrics': deep_dive_metrics,
@@ -687,13 +819,22 @@ def dashboard_view(request):
             'value': best_month_value
         },
         # NEW FEATURES CONTEXT
-        'day_part_json': json.dumps(day_chart_data, cls=DjangoJSONEncoder),
+        'day_part_json': day_chart_data,
         'phasing_strategy': phasing_strategy,
         'client_insights': top_client_insights,
         'master_plan': master_plan,
         'tactical_plan': tactical_plan,
         'tactical_client': tactical_client_name,
-        'tactical_month': "April 2026 (Ramadan - Algorithm Simulation)"
+        'tactical_month': "April 2026 (Ramadan - Algorithm Simulation)",
+        'mom_growth': mom_growth, # [NEW]
+        'monthly_seasonality': seasonal_data, # [NEW]
+        # LEADERBOARD ANALYSIS (Guidebook Section C)
+        'top_industry_avg': top_industry_avg,
+        'top_account_rev': top_account_rev,
+        'top_industry_roas': top_industry_roas,
+        'all_accounts_rev': all_accounts_rev,
+        'top_5_industries_avg': top_5_industries_avg,
+        'top_5_industries_roas': top_5_industries_roas,
     }
     
     return render(request, 'ads_analyzer/dashboard.html', context)
