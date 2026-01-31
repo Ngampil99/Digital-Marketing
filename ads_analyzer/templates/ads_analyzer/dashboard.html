@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 {% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
@@ -563,7 +563,7 @@
                     <select id="clientSelector"
                         class="bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-green-500 focus:outline-none min-w-[180px]">
                         {% for client in all_clients_list %}
-                        <option value="{{ client }}" {% if client==tactical_client %}selected{% endif %}>{{ client }}
+                        <option value="{{ client }}" {% if client == tactical_client %}selected{% endif %}>{{ client }}
                         </option>
                         {% endfor %}
                     </select>
