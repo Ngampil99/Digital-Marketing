@@ -385,39 +385,6 @@
             <div id="monthly-efficiency-chart" class="h-[380px]"></div>
         </div>
     </div>
-    <!-- Section: Top 10 Clients Table -->
-    <div class="card mb-8 overflow-hidden">
-        <h2 class="text-xl font-bold mb-4 text-white">Top 10 High Performing Clients (by Revenue)</h2>
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left text-gray-400">
-                <thead class="text-xs text-gray-400 uppercase bg-gray-700/50">
-                    <tr>
-                        <th class="px-4 py-3">Client Name</th>
-                        <th class="px-4 py-3 text-right">Spend</th>
-                        <th class="px-4 py-3 text-right">Revenue</th>
-                        <th class="px-4 py-3 text-right">Purchases</th>
-                        <th class="px-4 py-3 text-right">ROAS</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for client in clients_data %}
-                    <tr class="border-b border-gray-700 hover:bg-gray-700/20">
-                        <td class="px-4 py-3 font-medium text-white">{{ client.name }}</td>
-                        <td class="px-4 py-3 text-right">IDR {{ client.spend|idr_currency }}</td>
-                        <td class="px-4 py-3 text-right text-green-400">IDR {{ client.revenue|idr_currency }}</td>
-                        <td class="px-4 py-3 text-right">{{ client.purchases }}</td>
-                        <td class="px-4 py-3 text-right font-bold 
-                            {% if client.roas > 2 %}text-green-400
-                            {% elif client.roas < 1 %}text-red-400
-                            {% else %}text-yellow-400{% endif %}">
-                            {{ client.roas|floatformat:2 }}x
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
 
     <!-- Section: Annual Revenue & Spend Trend -->
     <div class="card mb-8">
