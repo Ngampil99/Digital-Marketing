@@ -281,13 +281,28 @@ def dashboard_view(request):
     tactical_plan = []
     tactical_client_name = "No Client Data"
     
-    # Select Top Client (based on simplified sorting above)
+    # Get list of all clients for dropdown selection
+    all_clients_list = [c['name'] for c in client_insights] if client_insights else []
+    
+    # Get selected client from URL params (default to top client)
+    selected_client = request.GET.get('client', '')
+    selected_month = request.GET.get('month', '1')  # Default January
+    
+    try:
+        target_month = int(selected_month)
+        if target_month < 1 or target_month > 12:
+            target_month = 1
+    except ValueError:
+        target_month = 1
+    
+    target_year = 2024  # Forecast year based on 2023 data
+    
+    # Select client (from param or default to top client)
     if top_client_insights:
-        tactical_client_name = top_client_insights[0]['name']
-        
-        # Target: April 2026 (Ramadan Simulation)
-        target_year = 2026
-        target_month = 4
+        if selected_client and selected_client in all_clients_list:
+            tactical_client_name = selected_client
+        else:
+            tactical_client_name = top_client_insights[0]['name']
         
         # 1. Get historical data for this client FROM ROW-LEVEL DF
         t_client_df = df_clients[df_clients['account_name'] == tactical_client_name].copy()
@@ -825,7 +840,10 @@ def dashboard_view(request):
         'master_plan': master_plan,
         'tactical_plan': tactical_plan,
         'tactical_client': tactical_client_name,
-        'tactical_month': "April 2026 (Ramadan - Algorithm Simulation)",
+        'tactical_month': f"{calendar.month_name[target_month]} 2024 (Forecast based on 2023 Data)",
+        'tactical_month_num': target_month,
+        'all_clients_list': all_clients_list,
+        'month_names': [(i, calendar.month_name[i]) for i in range(1, 13)],
         'mom_growth': mom_growth, # [NEW]
         'monthly_seasonality': seasonal_data, # [NEW]
         # LEADERBOARD ANALYSIS (Guidebook Section C)

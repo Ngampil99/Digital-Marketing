@@ -202,7 +202,8 @@
                                 {{ account.account_name }}
                             </td>
                             <td class="px-4 py-3 text-right">IDR {{ account.total_spend|idr_currency }}</td>
-                            <td class="px-4 py-3 text-right text-green-400 font-bold">IDR {{ account.total_revenue|idr_currency }}</td>
+                            <td class="px-4 py-3 text-right text-green-400 font-bold">IDR {{
+                                account.total_revenue|idr_currency }}</td>
                             <td class="px-4 py-3 text-right">{{ account.total_purchases|intdot }}</td>
                             <td class="px-4 py-3 text-right font-bold 
                                 {% if account.roas > 2 %}text-green-400
@@ -443,15 +444,18 @@
         <div class="grid grid-cols-3 gap-4 text-center">
             <div>
                 <div class="text-sm text-gray-400 mb-1">Current Projected Revenue</div>
-                <div class="text-2xl font-bold text-white">IDR {{ optimization_metrics.current_revenue|idr_currency }}</div>
+                <div class="text-2xl font-bold text-white">IDR {{ optimization_metrics.current_revenue|idr_currency }}
+                </div>
             </div>
             <div class="border-l border-r border-gray-700">
                 <div class="text-sm text-gray-400 mb-1">Optimized Revenue (AI Forecast)</div>
-                <div class="text-2xl font-bold text-green-400">IDR {{ optimization_metrics.optimized_revenue|idr_currency }}</div>
+                <div class="text-2xl font-bold text-green-400">IDR {{
+                    optimization_metrics.optimized_revenue|idr_currency }}</div>
             </div>
             <div>
                 <div class="text-sm text-gray-400 mb-1">Potential Uplift</div>
-                <div class="text-3xl font-bold text-green-400">+{{ optimization_metrics.uplift_percentage|floatformat:1 }}%</div>
+                <div class="text-3xl font-bold text-green-400">+{{ optimization_metrics.uplift_percentage|floatformat:1
+                    }}%</div>
                 <div class="text-xs text-gray-500">IDR {{ optimization_metrics.uplift_absolute|idr_currency }}</div>
             </div>
         </div>
@@ -539,16 +543,45 @@
     </div>
 
     <!-- Section: Client Tactical Planner (Calendar) -->
-    <div class="card mb-8">
-        <div class="flex justify-between items-center mb-6">
+    <div id="tactical-planner" class="card mb-8">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
             <div>
                 <h2 class="text-xl font-bold text-white">🗓️ Client Tactical Planner</h2>
                 <p class="text-sm text-gray-400">Automated Daily Recommendation for: <span
                         class="text-green-400 font-bold">{{ tactical_client }}</span> | Period: {{ tactical_month }}</p>
             </div>
-            <div class="text-right">
-                <span class="text-xs text-gray-500 block">Total Monthly Budget Allocation</span>
-                <span class="text-xl font-bold text-white">100%</span>
+            <div class="flex flex-col lg:flex-row gap-3 items-end lg:items-center">
+                <!-- Client Selector -->
+                <div>
+                    <label class="text-xs text-gray-500 block mb-1">Select Client</label>
+                    <select id="clientSelector"
+                        class="bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-green-500 focus:outline-none min-w-[180px]">
+                        {% for client in all_clients_list %}
+                        <option value="{{ client }}" {% if client==tactical_client %}selected{% endif %}>{{ client }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- Month Selector -->
+                <div>
+                    <label class="text-xs text-gray-500 block mb-1">Select Month (2024)</label>
+                    <select id="monthSelector"
+                        class="bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-green-500 focus:outline-none min-w-[140px]">
+                        {% for num, name in month_names %}
+                        <option value="{{ num }}" {% if num==tactical_month_num %}selected{% endif %}>{{ name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- Apply Button -->
+                <button onclick="applyTacticalFilter()"
+                    class="bg-green-600 hover:bg-green-700 text-white text-sm font-bold px-4 py-2 rounded transition-colors">
+                    Apply Filter
+                </button>
+                <div class="text-right">
+                    <span class="text-xs text-gray-500 block">Total Monthly Budget</span>
+                    <span class="text-xl font-bold text-white">100%</span>
+                </div>
             </div>
         </div>
 
@@ -1017,7 +1050,8 @@
                             </h3>
                             <div class="mt-2">
                                 <p class="text-sm text-gray-400 mb-4">
-                                    The system automatically detected and corrected <strong>{{ anomaly_report.total }}</strong> quality issues during ingestion.
+                                    The system automatically detected and corrected <strong>{{ anomaly_report.total
+                                        }}</strong> quality issues during ingestion.
                                     The following rules were applied to ensure analytical accuracy.
                                 </p>
 
@@ -1100,6 +1134,19 @@
         }
         // Expose to window
         window.toggleModal = toggleModal;
+
+        // Tactical Planner Filter Function
+        function applyTacticalFilter() {
+            const client = document.getElementById('clientSelector').value;
+            const month = document.getElementById('monthSelector').value;
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('client', client);
+            currentUrl.searchParams.set('month', month);
+            // Navigate to section after reload
+            currentUrl.hash = '';
+            window.location.href = currentUrl.toString() + '#tactical-planner';
+        }
+        window.applyTacticalFilter = applyTacticalFilter;
     </script>
 </body>
 
