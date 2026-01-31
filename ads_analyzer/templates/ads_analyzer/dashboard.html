@@ -55,6 +55,21 @@
         </div>
     </div>
 
+    <!-- [NEW] CRITICAL ALERT -->
+    {% if traffic_alert %}
+    <div class="bg-red-900/50 border-l-4 border-red-500 text-white p-6 mb-8 rounded shadow-lg animate-pulse">
+        <div class="flex items-start">
+            <div class="text-3xl mr-4">🚨</div>
+            <div>
+                <h3 class="font-bold text-lg text-red-400">{{ traffic_alert.title }}</h3>
+                <p class="font-bold text-xl mb-1">{{ traffic_alert.message }}</p>
+                <p class="text-sm text-gray-300">RECOMMENDATION: <span class="bg-red-600 px-2 py-1 rounded font-bold">{{
+                        traffic_alert.recommendation }}</span></p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Summary Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="card">
@@ -393,13 +408,12 @@
         </div>
     </div>
 
-    <!-- Section: Annual Revenue & Spend Trend -->
-    <div class="card mb-8">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold text-white">Annual Revenue & Spend Trend (Jan - Dec 2023)</h2>
-            <div class="text-sm text-gray-400">Includes Ramadan & Harbolnas Events</div>
-        </div>
-        <div id="main-chart" style="width:100%;height:500px;"></div>
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-white">Annual Revenue & Spend Trend (Jan - Dec 2023)</h2>
+        <div class="text-sm text-gray-400">Includes Ramadan & Harbolnas Events</div>
+    </div>
+    <div id="main-chart" style="width:100%;height:500px;"></div>
     </div>
 
     <!-- Section 2: Funnel & Correlation Analysis (Modul 3) -->
@@ -1033,7 +1047,7 @@
         Plotly.newPlot('pie-recommended', [{
             values: allocRec.map(d => d.value), labels: allocRec.map(d => d.label),
             type: 'pie', hole: 0.4, textinfo: 'label+percent', marker: { colors: ['#6366f1', '#ec4899', '#14b8a6'] }
-        }], pieLayout, { responsive: true });
+        }], pieLayout, { responsitrue });
 
     </script>
     <!-- Anomaly Report Modal -->
@@ -1152,8 +1166,7 @@
             currentUrl.hash = '';
             window.location.href = currentUrl.toString() + '#tactical-planner';
         }
-        window.applyTacticalFilter = applyTacticalFilter;
-    </script>
+        window.applyTacticalFilter = applyTaalF    </script>
 </body>
 
 </html>

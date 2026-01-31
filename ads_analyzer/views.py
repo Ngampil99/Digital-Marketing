@@ -391,35 +391,76 @@ def dashboard_view(request):
             # 5. Finalize Daily Plan - use monthly strategy but adjust intensity by week
             # 6. Apply Phase Logic (Monthly -> Daily)
             for d in month_days_map:
-                phase = "Normal Phase"
-                action = base_action
-                color = base_color
-                
                 # Apply Daily Tactical Overrides (Data-Driven)
                 day_num = d['date'].day
                 zone_type = 'neutral'
                 
+                # Base Weight from historical day-of-week performance
+                adjusted_weight = d['weight']
+                current_split = base_split
+
                 if day_num in tactical_zones['dead']:
                      phase = "STOP-LOSS ZONE"
                      action = "PAUSE / REDUCE Traffic (Low ROAS Area)"
-                     color = "red" # Distinctive color for danger
+                     color = "red" 
                      zone_type = 'dead'
+                     # Strategy Override: Kill Traffic, minimize budget
+                     current_split = "0% Traffic / 100% Sales (Maintenance)"
+                     adjusted_weight = d['weight'] * 0.5 # Reduce planned budget by 50%
+                     
                 elif day_num in tactical_zones['gold']:
                      phase = "SCALE-UP ZONE"
                      action = "INCREASE Sales Budget (+30%) (High ROAS Area)"
                      color = "green" 
                      zone_type = 'gold'
+                     # Strategy Override: Aggressive Push
+                     current_split = "10% Traffic / 90% Sales"
+                     adjusted_weight = d['weight'] * 1.3 # Increase planned budget by 30%
                 
-                # Calculate daily budget portion (normalized)
-                daily_budget_pct = (d['weight'] / total_month_weight) * 100
+                # Update weight in the original list for total calculation (needs 2 pass or robust logic)
+                # Since we are iterating, we need to handle total_weight carefully if we want it to sum to 100%
+                # Simplified approach: We calculate percentage relative to the *original* total for now, 
+                # or we just accept that the sum might slightly deviate from 100% (which is fine for a guide)
+                # BETTER: Store adjusted weights first, then normalize.
+                d['adjusted_weight'] = adjusted_weight
+            
+            # Re-calculate total weight based on adjustments
+            total_adjusted_weight = sum(day.get('adjusted_weight', day['weight']) for day in month_days_map)
+
+            for d in month_days_map:
+                # Retrieve calculated props
+                day_num = d['date'].day
+                
+                # Re-apply string logic for the final object (dumb but safe)
+                phase = "Normal Phase"
+                action = base_action
+                color = base_color
+                current_split = base_split
+                zone_type = 'neutral'
+                
+                if day_num in tactical_zones['dead']:
+                     phase = "STOP-LOSS ZONE"
+                     action = "PAUSE / REDUCE Traffic (Low ROAS Area)"
+                     color = "red"
+                     zone_type = 'dead'
+                     current_split = "0% Traffic / 100% Sales"
+                elif day_num in tactical_zones['gold']:
+                     phase = "SCALE-UP ZONE"
+                     action = "INCREASE Sales Budget (+30%) (High ROAS Area)"
+                     color = "green"
+                     zone_type = 'gold'
+                     current_split = "10% Traffic / 90% Sales"
+                
+                # Calculate daily budget portion (normalized against NEW total)
+                daily_budget_pct = (d['adjusted_weight'] / total_adjusted_weight) * 100
                  
                 tactical_plan.append({
                     'day': day_num,
                     'full_date': d['date'].strftime('%Y-%m-%d'),
-                    'day_name': d['day_name'], # e.g. Monday
+                    'day_name': d['day_name'], 
                     'budget_percent': round(daily_budget_pct, 1),
                     'strategy': month_strategy,
-                    'split': base_split,
+                    'split': current_split,
                     'phase': phase,
                     'action': action,
                     'color': color,
@@ -845,19 +886,45 @@ def dashboard_view(request):
             for _, row in season_stats.iterrows()
         ]
 
+    # Serialize Chart Data
+    chart_data_json = json.dumps(chart_data, cls=DjangoJSONEncoder)
+    seasonality_chart_json = json.dumps(seasonal_data, cls=DjangoJSONEncoder) # Assuming seasonal_data is the source for seasonality_chart_json
+    heatmap_json_serialized = json.dumps(heatmap_json, cls=DjangoJSONEncoder) # Renamed to avoid conflict with dict
+    objective_chart_json_serialized = json.dumps(objective_chart, cls=DjangoJSONEncoder) # Renamed to avoid conflict with dict
+
+    # Traffic Alert Logic (Example - you might need to define thresholds)
+    # Traffic Alert Logic (Traffic Gap Analysis)
+    traffic_metrics = clean_data_qs.filter(campaign_objective='Traffic').aggregate(
+        t_clicks=Sum('link_clicks'),
+        t_views=Sum('content_views')
+    )
+    t_clicks = traffic_metrics['t_clicks'] or 0
+    t_views = traffic_metrics['t_views'] or 0
+    t_dropoff_rate = ((t_clicks - t_views) / t_clicks * 100) if t_clicks > 0 else 0
+    
+    traffic_alert = None
+    if t_dropoff_rate > 90:
+        traffic_alert = {
+            'severity': 'critical',
+            'title': 'CRITICAL: BROKEN TRAFFIC BRIDGE',
+            'message': f'Traffic Campaign Drop-off is {t_dropoff_rate:.1f}%. {t_clicks:,} Clicks resulted in {t_views} Views.',
+            'recommendation': 'STOP TRAFFIC ADS. Fix Website Loading Speed or Pixel Installation immediately.'
+        }
+
+
+
     context = {
-        'chart_data_json': chart_data,
-        'funnel_data_json': funnel_metrics,
-        'industry_chart_json': json.dumps(industry_chart_data, cls=DjangoJSONEncoder), # Legacy for other uses
-        'industry_chart_data': industry_chart_data, # NEW: For json_script tag
-        'industry_monthly_json': industry_monthly_json,
-        'objective_chart_json': objective_chart,
-        'deep_dive_metrics': deep_dive_metrics,
-        'monthly_trend_json': monthly_trend_data,
+        'chart_data_json': chart_data_json,
+        'seasonality_chart_json': seasonality_chart_json,
+        'heatmap_json': heatmap_json_serialized,
+        'objective_chart_json': objective_chart_json_serialized,
+        
+        'traffic_alert': traffic_alert, # [NEW] Pass alert to template
+        'dashboard_stats': deep_dive_metrics, # Renamed from deep_dive_metrics
+        'monthly_trend': monthly_trend_data, # Renamed from monthly_trend_json
         # Modul 3 Context
         'funnel_abs': funnel_abs,
         'funnel_rates': funnel_rates,
-        'heatmap_json': heatmap_json,
         'date_range': date_range_str,
         'clients_data': clients_data,
         'allocation_data': {
